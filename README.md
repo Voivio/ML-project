@@ -4,11 +4,17 @@ This is the repository for ML project, face verification.
 ## Pipeline
 
 Face alignment [1] (locating facial landmarks like eyes, nose or mouth)
+
 ↓
+
 High dimensional features (based on local binary patterns (LBP))
+
 ↓
+
 Mapping to low dimensional features [2] (sparse)
+
 ↓
+
 GaussianFace [3]
 
 References:
