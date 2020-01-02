@@ -3,18 +3,12 @@ This is the repository for ML project, face verification.
 
 ## Pipeline
 
-Face alignment [1] (locating facial landmarks like eyes, nose or mouth)
-
-↓
-
+Face alignment [1, 4] (locating facial landmarks like eyes, nose or mouth)
+**→**
 High dimensional features (based on local binary patterns (LBP))
-
-↓
-
+**→**
 Mapping to low dimensional features [2] (sparse)
-
-↓
-
+**→**
 GaussianFace [3]
 
 References:
@@ -24,3 +18,5 @@ References:
 [2]. Chen, D.; Cao, X.; Wen, F.; and Sun, J. 2013. Blessing of dimensionality: High-dimensional feature and its efficient compression for face verification. In CVPR.
 
 [3]. Lu, Chaochao, and Xiaoou Tang. "Surpassing human-level face verification performance on LFW with GaussianFace." Twenty-ninth AAAI conference on artificial intelligence. 2015.
+
+[4]. Fern. http://vision.cse.psu.edu/seminars/talks/2009/random_tff/ForestsAndFernsTalk.pdf
