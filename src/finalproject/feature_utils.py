@@ -70,11 +70,9 @@ class HighDimensionalLBP:
         hist = np.zeros((len(self.lbp_mapping),), dtype=np.int)
         for i in range(1, h - 1):
             for j in range(1, w - 1):
-                local_pattern = img[i - 1:i + 2, j - 1:j + 2].reshape(-1)
-                local_pattern = np.concatenate((local_pattern[:4], local_pattern[5:]), axis=0)
-                local_pattern = (local_pattern >= img[i, j]).astype(np.int)
-                # raw_code = int("".join([str(x) for x in local_pattern]), 2)
-                raw_code = "".join([str(x) for x in local_pattern])
+                local_pattern = [img[i - 1, j], img[i - 1, j - 1], img[i, j - 1], img[i + 1, j - 1], img[i + 1, j],
+                                 img[i + 1, j + 1], img[i, j + 1], img[i - 1, j + 1]]
+                raw_code = "".join([str(int(x > img[i, j])) for x in local_pattern])
                 lbp_code = self.lbp_mapping_dict[raw_code]
                 hist[lbp_code] += 1
         return hist
