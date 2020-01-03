@@ -4,12 +4,31 @@ import os
 
 class sample:
     def __init__(self, img, truth, box):
-        self.img = img
+        self.image = img
         self.truth = truth
         # a nparray containing npts landmarks, each landmark is denoted by its x and y coordinate
         self.guess = np.zeros(truth.shape)
         self.box = box
         # a nparray of two coordinates, denoting the start and end point of a rectangle
+
+class regressor:
+    def __init__(self, localCoords, ferns, features):
+        self.localCoords = localCoords
+        self.ferns = ferns
+        self.features = features
+
+class feature:
+    def __init__(self, m, n, rho_m, rho_n, coor_rhoDiff):
+        self.m = m
+        self.n = n
+        self.rho_m = rho_m
+        self.rho_n = rho_n
+        self.coor_rhoDiff = coor_rhoDiff
+
+class fern:
+    def __init__(self, thresholds, outputs):
+        self.thresholds = thresholds
+        self.outputs = outputs
 
 def loadTrainData(data_path):
     number_files = len(os.listdir(data_path)) / 4 # because for a image we have 4 related files
@@ -18,7 +37,7 @@ def loadTrainData(data_path):
         if i % 50 == 0:
             print('Samples loaded {} / {} ...'.format(i, number_files))
 
-        img = cv2.imread(data_path + 'image_%04d.png'%(i+1))
+        img = cv2.imread(data_path + 'image_%04d.png'%(i+1), cv2.IMREAD_GRAYSCALE)
 
         file = open('lfpw-test/image_%04d_original.ljson'%(i+1),'r')
         content = json.load(file)
@@ -41,6 +60,19 @@ def loadTrainData(data_path):
         train_set.append(sample(img, np.array(pts), np.array(rect)))
     return train_set
 
+def getDistPupils(shape):
+    npts = shape.shape[0]
+    if npts == 29:
+        dist_pupils = np.linalg.norm(shape[7-1,:] - shape[16-1,:])
+    elif npts == 68:
+        left_eye_4 = [38 - 1, 39 - 1, 41 - 1, 42 - 1]
+        right_eye_4 = [44 - 1, 45 - 1, 47 - 1, 48 - 1]
+        left_center = np.mean(shape(left_eye_4, :), 0)
+        right_center = np.mean(shape(right_eye_4, :), 0)
+        dist_pupils = np.linalg.norm(left_center - right_center)
+
+    return dist_pupils
+
 def initialization(init_train_set, N_aug, stage = 'train'):
     number_samples = len(init_train_set)
     train_set = []
@@ -53,7 +85,7 @@ def initialization(init_train_set, N_aug, stage = 'train'):
                 train_set[-1].guess = init_train_set[random_index[index]].truth
 
                 # align the guess shape with the box
-                train_set[-1].guess = alignShapeToBox(train_set[-1].guess, init_train_set[random_index[index]].box, train_set[-1].box);
+                train_set[-1].guess = alignShapeToBox(train_set[-1].guess, init_train_set[random_index[index]].box, train_set[-1].box)
         print('Initialization done. Number of augumented samples: {} x {} = {}'.format(number_samples, N_aug, number_samples*N_aug))
     else:
     # when testing, we take representive shape from train set
@@ -61,7 +93,7 @@ def initialization(init_train_set, N_aug, stage = 'train'):
 
 def alignShapeToBox(shape0, box0, box):
     npts = shape0.shape[0] # number of landmarks
-    # shape = reshape(shape0, npts, 2);
+    # shape = reshape(shape0, npts, 2)
     shape = np.zeros(shape0.shape)
 
     scale = box[1,0] / box0[1,0]
@@ -139,123 +171,109 @@ def estimateTransform(source_shape, target_shape):
     t = mu_target.T - s * R.dot(mu_p.T)
     return s, R, t
 
-def normalizedShapeTargets
-    nsamples = numel(trainset)
-    Lfp = length(meanShape)
-    Nfp = Lfp/2
-    Mnorm = cell(nsamples, 1)
-    Y = zeros(nsamples, Lfp)
-    for i=1:nsamples
-        [s, R, ~] = estimateTransform(reshape(trainset{i}.guess, Nfp, 2), ...
-            reshape(meanShape, Nfp, 2))
-        Mnorm{i}.M = s*R
-        Mnorm{i}.invM = inv(Mnorm{i}.M)
-        diff = trainset{i}.truth - trainset{i}.guess
-        tdiff = Mnorm{i}.M * reshape(diff, Nfp, 2)'
-        Y(i,:) = reshape(tdiff', 1, Lfp)
+def normalizedShapeTargets(train_set, mean_shape):
+    nsamples = len(train_set)
+    npts = mean_shape.shape[0]
+    M_norm = [] # M_norm contains the similarity transform matrix for each sample
+    # Mnorm = cell(nsamples, 1)
+    Y = np.zeros(nsamples, npts)
+    for i in range(nsamples):
+        [s, R, ~] = estimateTransform(trainset[i].guess, mean_shape)
+        M_norm.append(s*R)
+        # Mnorm{i}.invM = inv(Mnorm{i}.M)
+        diff = trainset[i].truth - trainset[i].guess
+        tdiff = M_norm[i].dot(diff.T)
+        Y(i,:) = tdiff.T.reshape(1, -1)
+    return Y, M_norm
 
-def learnStageRegressor(trainset, Y, Mnorm, opts)
-    Lfp = length(trainset{1}.truth)
-    Nfp = Lfp/2
-    P = opts.params.P
-    T = opts.params.T
-    F = opts.params.F
-    K = opts.params.K
-    beta = opts.params.beta kappa = opts.params.kappa
+def learnStageRegressor(train_set, Y, M_norm, params):
+    npts = trainset[0].truth.shape[0]
+    P = params['P']
+    T = params['T']
+    F = params['F']
+    K = params['K']
+    beta = params['beta']
+    kappa = params['kappa']
 
     # generate local coordinates
-    print('generate local coordinates...')
-    localCoords = zeros(P, 3)  # fpidx, x, y
+    print('Generating local coordinates...')
+    localCoords = np.zeros(P, 3)  # fpidx, x, y
     for i in range(P):
-        localCoords(i, 1) = randperm(Nfp, 1)
-        localCoords(i, 2:3) = (rand(1, 2) - 0.5) * kappa
+        localCoords[i, 0] = np.randint(0, npts) # randomly choose a landmark
+        localCoords[i, 1:] = (np.random.uniform(size=(1,2)) - 0.5) * kappa # fluctuate around landmark
 
     # extract shape indexed pixels
-    print('extract shape indexed pixels...')
-    nsamples = numel(trainset)
-    Mrho = zeros(nsamples, P)
+    print('Extracting shape indexed pixels...')
+    nsamples = len(train_set)
+    M_rho = np.zeros(nsamples, P)
     for i in range(nsamples):
-        Minv = Mnorm{i}.invM
+        M_norm_inv = np.linalg.inv(M_norm[i])
 
-        dp = Minv * localCoords(:,2:3)'
-        dp = dp'
+        dp = M_norm_inv.dot(localCoords[:,1:].T).T
 
-        fpPos = reshape(trainset{i}.guess, Nfp, 2)
-        pixPos = fpPos(ind2sub([Nfp 2],localCoords(:,1)), :) + dp
-        [rows, cols] = size(trainset{i}.image)
-        pixPos = round(pixPos)
-        pixPos(:,1) = min(max(pixPos(:,1), 1), cols)
-        pixPos(:,2) = min(max(pixPos(:,2), 1), rows)
-        Mrho(i,:) = trainset{i}.image(sub2ind(size(trainset{i}.image), pixPos(:,2)', pixPos(:,1)'))
+        # fpPos = reshape(train_set[i].guess, Nfp, 2)
+        # pixPos = fpPos(ind2sub([Nfp 2],localCoords(:,1)), :) + dp
+
+        pixPos = train_set[i].guess(localCoords[:,0], :) + dp
+        rows, cols = trainset[i].image.shape
+        pixPos = np.round(pixPos)
+        pixPos(:,0) = np.minimum(np.maximum(pixPos[:,0], 0), cols-1)
+        pixPos(:,1) = np.minimum(np.maximum(pixPos[:,1], 0), rows-1)
+        # in case pixel position out of range
+        M_rho[i,:] = trainset[i].image[pixPos(:,2).T, pixPos(:,1).T]
     # compute pixel-pixel covariance
-    covRho = cov(Mrho)
+    cov_Rho = np.cov(M_rho, rowvar=False)
 
-    Mrho_centered = Mrho - repmat(mean(Mrho), size(Mrho, 1), 1)
+    M_rho_centered = M_rho - tile(mean(M_rho, 0), (M_rho.shape[0], 1))
 
-    diagCovRho = diag(covRho)
-    varRhoDRho = -2.0 * covRho + repmat(diagCovRho, 1, P) + repmat(diagCovRho', P, 1)
-    inv_varRhoDRho = 1.0 ./ varRhoDRho
+    diagCovRho = np.diag(cov_Rho)
+    varRhoDRho = -2.0 * covRho + repmat(diagCovRho.T, 1, P) + repmat(diagCovRho, P, 1)
+    inv_varRhoDRho = 1.0/varRhoDRho # element-wise inverse
 
     # compute all ferns
-    print('construct ferns...')
-    ferns = cell(K,1)
-    features = cell(K, 1)
+    print('Constructing ferns...')
+    ferns = []
+    features = []
     for k in range(K):
-        print('Internal regressor {} / {}'.format(k, K))
-        features{k} = correlationBasedFeatureSelection(Y, Mrho, Mrho_centered, inv_varRhoDRho, F)
-        ferns{k} = trainFern(features{k}, Y, Mrho, beta)
+        features.append(correlationBasedFeatureSelection(Y, M_rho, M_rho_centered, inv_varRhoDRho, F))
+        ferns.append(trainFern(features[-1], Y, M_rho, beta))
 
         # update the normalized target
-        Mdiff_rho = zeros(nsamples, F)
-        for f=1:F
-            Mdiff_rho(:,f) = features{k}{f}.rho_m - features{k}{f}.rho_n
-        end
-        updateMat = evaluateFern_batch(Mdiff_rho, ferns{k})
-        fprintf('fern(%d)\tmax(Y) = %.6g, min(Y) = %.6g\n', k, max(max(Y)), min(min(Y)))
+        M_diff_rho = np.zeros(nsamples, F)
+        for f in range(F):
+            M_diff_rho[:,f] = features[k,f].rho_m - features[k,f].rho_n
+
+        updateMat = evaluateFern_batch(M_diff_rho, ferns[k])
+        print('fern %d/%d\tmax(Y) = %.6g, min(Y) = %.6g'%(k, K, np.max(Y), np.min(Y)))
         Y = Y - updateMat
 
-    regressor.localCoords = localCoords
-    regressor.ferns = ferns
-    regressor.features = features
+    regressor = regressor(localCoords, ferns, features)
 
     return regressor
 
-def correlationBasedFeatureSelection(Y, Mrho, Mrho_centered, inv_varRhoDRho, F):
-    [~, Lfp] = size(Y)
+def correlationBasedFeatureSelection(Y, M_rho, M_rho_centered, inv_varRhoDRho, F):
+    Lfp = Y.shape[1]
     Nfp = Lfp/2
-    [n, P] = size(Mrho)
-    features = cell(F, 1)
+    n, P = M_rho.shape
+    features = []
 
     for i in range(F):
-        nu = randn(Lfp, 1)
-        Yprob = Y * nu
+        nu = np.random.randn(Lfp, 1)
+        Yprob = Y.dot(nu)
 
-        covYprob_rho = (sum(bsxfun(@times, Yprob-mean(Yprob), Mrho_centered)))/(n-1)
-        covYprob_rho = covYprob_rho'
-        #covYprob_rho = covVM(Yprob, Mrho_centered)
-
-        #varYprob = var(Yprob)
-        #inv_varYprob = 1.0 / sqrt(varYprob)
-
-        covRhoMcovRho = repmat(covYprob_rho, 1, P) - repmat(covYprob_rho', P, 1)
-
-        #corrYprob_rhoDrho = covRhoMcovRho .* (inv_varYprob * inv_varRhoDRho)
-        corrYprob_rhoDrho = covRhoMcovRho .* inv_varRhoDRho
+        covYprob_rho = (sum(Yprob-mean(Yprob)*M_rho_centered),0)/(n-1) # R^{1xP}
+        covRhoMcovRho = tile(covYprob_rho.T, (1, P)) - tile(covYprob_rho, (P, 1))
+        corrYprob_rhoDrho = covRhoMcovRho*np.sqrt(inv_varRhoDRho)
 
         #corrYprob_rhoDrho(logical(eye(size(corrYprob_rhoDrho)))) = -10000.0
 
         for j in range(P):
-            corrYprob_rhoDrho(j, j) = -10000.0
+            corrYprob_rhoDrho[j,j] = -10000.0
 
-        [maxCorr, maxLoc] = max(corrYprob_rhoDrho(:))
-        [maxLoc_row, maxLoc_col] = ind2sub(size(corrYprob_rhoDrho), maxLoc)
+        maxCorr = max(corrYprob_rhoDrho)
+        maxLoc_row, maxLoc_col = np.unravel_index(np.argmax(corrYprob_rhoDrho, axis=None), corrYprob_rhoDrho.shape)
 
-        f.m = maxLoc_row
-        f.n = maxLoc_col
-        f.rho_m = Mrho(:,f.m)
-        f.rho_n = Mrho(:,f.n)
-        f.coor_rhoDiff = maxCorr
-        features{i} = f
+        features.append(feature(maxLoc_row, maxLoc_col, Mrho[:,f.m],  Mrho[:,f.n], maxCorr))
 
     return features
 
@@ -269,16 +287,16 @@ def correlationBasedFeatureSelection(Y, Mrho, Mrho_centered, inv_varRhoDRho, F):
 
 # fern training
 def trainFern(features, Y, Mrho, beta):
-    F = numel(features)
+    F = len(features)
     # compute thresholds for ferns
-    thresholds = rand(F, 1)
+    thresholds = np.random.uniform(size=(F, 1))
     for f in range(F):
-        fdiff = features{f}.rho_m - features{f}.rho_n
+        fdiff = features[f].rho_m - features[f].rho_n
         maxval = max(fdiff)
         minval = min(fdiff)
-        meanval = mean(fdiff)
+        meanval = np.mean(fdiff)
         range = min(maxval-meanval, meanval-minval)
-        thresholds(f) = (thresholds(f)-0.5)*0.2*range + meanval
+        thresholds[f] = (thresholds[f]-0.5)*0.2*range + meanval
 
     # partition the samples into 2^F bins
     bins = partitionSamples(Mrho, features, thresholds)
@@ -286,46 +304,91 @@ def trainFern(features, Y, Mrho, beta):
     # compute the outputs of each bin
     outputs = computeBinOutputs(bins, Y, beta)
 
-    fern.thresholds = thresholds
-    fern.outputs = outputs
-
+    fern = fern(thresholds, outputs)
+    # fern.thresholds = thresholds
+    # fern.outputs = outputs
     return fern
 
 def partitionSamples(Mrho, features, thresholds):
-    F = numel(features)
-    bins = cell(2^F, 1)
-    [nsamples, ~] = size(Mrho)
-    diffvecs = zeros(nsamples, F)
+    F = len(features)
+    # bins = cell(2^F, 1)
+    binss = []
+    nsamples = Mrho.shape[0]
+    diffvecs = np.zeros(nsamples, F)
     for i in range(F):
-        diffvecs(:,i) = Mrho(:, features{i}.m) - Mrho(:, features{i}.n)
+        diffvecs[:,i] = Mrho[:, features[i].m] - Mrho[:, features[i].n]
 
     for i in range(F):
-        di = diffvecs(:,i)
-        lset = find(di < thresholds(i))
-        rset = setdiff(1:nsamples, lset)
-        diffvecs(lset, i) = 0
-        diffvecs(rset, i) = 1
+        di = diffvecs[:,i]
+        lset = np.where(di < thresholds[i])
+        rset = np.setdiff1d(array(range(nsamples)), lset)
+        diffvecs[lset, i] = 0
+        diffvecs[rset, i] = 1
 
-    wvec = 2.^[0:F-1]'
+    wvec = np.array(range(F))
+    wvec = 2**wvec[:, np.newaxis]
 
-    idxvec = diffvecs * wvec + 1
+    idxvec = diffvecs.dot(wvec)
 
-    for i=1:2^F
-        bins{i} = find(idxvec==i)
+    for i in range(2**F):
+        bins.append(np.where(idxvec==i))
 
     return bins
 
 def computeBinOutputs(bins, Y, beta):
-    [~, Lfp] = size(Y)
-    nbins = numel(bins)
-    outputs = zeros(nbins, Lfp)
-    for i=1:nbins
-        if isempty(bins{i})
+    Lfp = Y.shape[1]
+    nbins = len(bins)
+    outputs = np.zeros(nbins, Lfp)
+    for i in range(nbins):
+        if bins[i].size == 0: # empty bin
             continue
-        end
 
-        outputs(i,:) = sum(Y(bins{i}, :))
-        ni = length(bins{i})
+        outputs[i,:] = sum(Y[bins[i], :])
+        ni = len(bins[i])
         factor = 1.0 / ((1 + beta/ni)*ni)
-        outputs(i,:) = outputs(i,:) * factor
-        return outputs
+        outputs[i,:] = outputs[i,:] * factor
+    return outputs
+
+def evaluateFern_batch(diffvecs, fern):
+    F = len(fern.thresholds)
+    nsamples = diffvecs.shape[0]
+    for i in range(F):
+        di = diffvecs[:,i]
+        lset = np.where(di < thresholds[i])
+        rset = np.setdiff1d(array(range(nsamples)), lset)
+        diffvecs[lset, i] = 0
+        diffvecs[rset, i] = 1
+
+    wvec = np.array(range(F))
+    wvec = 2**wvec[:, np.newaxis]
+
+    idxvec = diffvecs.dot(wvec)
+
+    output = fern.outputs[idxvec,:]
+    return output
+
+def updateGuessShapes(trainset, Mnorm, regressor):
+    nsamples = len(trainset)
+    Nfp = trainset[0].truth.shape[0]
+    maxError = 0
+    F = len(regressor.ferns[0].thresholds)
+    K = len(regressor.ferns)
+    rho_diff = np.zeros(nsamples, F)
+    Mds = np.zeros(nsamples, Nfp * 2)
+    for k in range(K):
+        for f in range(F):
+            rho_diff[:,f] = regressor.features[k,f].rho_m - regressor.features[k,f].rho_n
+
+        Mds = Mds + evaluateFern_batch(rho_diff, regressor.ferns[k])
+
+    for i in range(nsamples):
+        ds = Mds[i,:]
+        ds = ds.reshape(Nfp, 2).T
+        ds = np.linalg.inv(Mnorm[i]).dot(ds)
+        ds = ds.T
+        trainset[i].guess = trainset[i].guess + ds
+        error = (trainset[i].truth - trainset[i].guess).reshape(-1, 1)
+        maxError = max(maxError, np.linalg.norm(error))
+
+    print('Maxerror : {}'.format(maxError))
+    return trainset
