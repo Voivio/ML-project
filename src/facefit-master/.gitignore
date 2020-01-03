@@ -5,4 +5,4 @@
 *.a
 experiments/.*
 experiments/local*
-models/*
+# models/*
