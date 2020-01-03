@@ -39,7 +39,7 @@ class InnerCascadeBuilder(RegressorBuilder):
         data = self.precompute(pixel_vectors, feature_extractor, mean_shape)
 
         primitive_regressors = []
-        for i in xrange(self.n_primitive_regressors):
+        for i in range(self.n_primitive_regressors):
             print_dynamic("Building primitive regressor {}".format(i))
             primitive_regressor = self.primitive_builder.build(pixel_vectors, targets, data)
             # Update targets.

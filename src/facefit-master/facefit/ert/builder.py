@@ -1,7 +1,7 @@
 from facefit import cascade
 from facefit.pixel_extractor import PixelExtractorBuilder
-from tree import RegressionTreeBuilder
-from forest import RegressionForestBuilder
+from .tree import RegressionTreeBuilder
+from .forest import RegressionForestBuilder
 
 class ERTBuilder(cascade.CascadedShapeRegressorBuilder):
     def __init__(self, n_landmarks=68, n_stages=10, n_trees=500, tree_depth=5, n_candidate_splits=20,

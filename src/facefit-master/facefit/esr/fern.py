@@ -33,7 +33,7 @@ class FernBuilder(RegressorBuilder):
     def _calc_bin_averages(targets, bin_ids, n_features, n_landmarks, beta):
         bins = np.zeros((2 ** n_features, 2 * n_landmarks))
         bins_size = np.zeros((2 ** n_features,))
-        for i in xrange(len(bin_ids)):
+        for i in range(len(bin_ids)):
             bins[bin_ids[i]] += targets[i]
             bins_size[bin_ids[i]] += 1
         denoms = (bins_size + beta)
@@ -47,7 +47,7 @@ class FernBuilder(RegressorBuilder):
         cov_pp, pixel_values, pixel_averages, pixel_var_sum = data
         feature_indices = np.zeros((self.n_features, 2), dtype=int, order='c')
 
-        for f in xrange(self.n_features):
+        for f in range(self.n_features):
             dir = rand_unit_vector(2*n_landmarks)
             feature_indices[f] = FernBuilder._highest_correlated_feature(dir, targets, cov_pp,pixel_values,
                                                                          pixel_averages, pixel_var_sum)
@@ -76,7 +76,7 @@ class Fern(Regressor):
     @staticmethod
     def get_bin(features, thresholds):
         res = 0
-        for i in xrange(len(features)):
+        for i in range(len(features)):
             if features[i] <= thresholds[i]:
                 res |= 1 << i
         return res
@@ -103,18 +103,18 @@ class Fern(Regressor):
         for b, current_bin in enumerate(self.bins):
             # compressed_bin = np.zeros((Q, 2))
             residual = current_bin.copy()
-            for k in xrange(Q):
+            for k in range(Q):
                 max_i = np.argmax(basis.dot(residual))
 
                 self.compressed_bins[b][k] = max_i
                 compressed_matrix = np.zeros((self.n_landmarks*2, k+1))
-                for j in xrange(k+1):
+                for j in range(k+1):
                     compressed_matrix[:, j] = basis[self.compressed_bins[b][j]]
                 compressed_matrix_t = np.transpose(compressed_matrix)
 
                 retval, dst = cv2.solve(compressed_matrix_t.dot(compressed_matrix),
                                        compressed_matrix_t.dot(current_bin), flags=cv2.DECOMP_SVD)
-                for j in xrange(k+1):
+                for j in range(k+1):
                     self.compressed_coeffs[b][j] = dst[j]
                 residual -= compressed_matrix.dot(dst).reshape(2*self.n_landmarks,)
 

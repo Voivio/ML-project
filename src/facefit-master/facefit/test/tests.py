@@ -6,7 +6,7 @@ from facefit.util import *
 
 
 def compare_arrays(self, a, b):
-    return self.failUnless(np.isclose(np.array(a), b, atol=1e-5).all())
+    return self.assertTrue(np.isclose(np.array(a), b, atol=1e-5).all())
 
 # class ESRTest(unittest.TestCase):
 #     def test_fit_shape_to_box(self):
@@ -42,7 +42,7 @@ class FernBuilderTest(unittest.TestCase):
 
         for pixels, feat_ind, res in zip(pixel_samples, feature_indices, result):
             ans = FernBuilder._get_features(np.array(pixels), np.array(feat_ind))
-            self.failUnless(np.isclose(np.array(res), ans).all())
+            self.assertTrue(np.isclose(np.array(res), ans).all())
 
 
     def test_calc_bin_averages(self):

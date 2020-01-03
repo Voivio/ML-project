@@ -12,9 +12,9 @@ class RegressionTreeBuilder(RegressorBuilder):
 
     def build(self, pixels, targets, data):
         pixel_mean_coords, mean_shape = data
-        buckets = [None for _ in xrange((1 << self.depth) - 1)]
-        sums = [0 for _ in xrange((1 << self.depth) - 1)]
-        cnts = [0 for _ in xrange((1 << self.depth) - 1)]
+        buckets = [None for _ in range((1 << self.depth) - 1)]
+        sums = [0 for _ in range((1 << self.depth) - 1)]
+        cnts = [0 for _ in range((1 << self.depth) - 1)]
 
         splits = []
 
@@ -24,7 +24,7 @@ class RegressionTreeBuilder(RegressorBuilder):
         target_size = len(targets[0])
         perm = np.arange(0, len(targets), dtype=int)
 
-        for i in xrange(self.n_split_nodes):
+        for i in range(self.n_split_nodes):
             split, division, best_sums = self.get_best_split(pixels, targets, perm, buckets[i][0], buckets[i][1],
                                              pixel_mean_coords, sums[i], cnts[i], self.n_test_splits)
             begin, mid, end = division
@@ -37,11 +37,11 @@ class RegressionTreeBuilder(RegressorBuilder):
             cnts[2*i+2] = (end-mid)
         leaves = np.zeros(shape=(1 << (self.depth-1), target_size))
 
-        for i in xrange(self.n_split_nodes, (1 << self.depth) - 1):
+        for i in range(self.n_split_nodes, (1 << self.depth) - 1):
             if cnts[i] != 0:
                 leaves[i - self.n_split_nodes] = self.MU*sums[i] / cnts[i]
                 s = ""
-                for k in xrange(int(buckets[i][0]), int(buckets[i][1])):
+                for k in range(int(buckets[i][0]), int(buckets[i][1])):
                     s += " " + str(perm[k])
         return RegressionTree(splits, leaves, self.depth)
 
@@ -61,7 +61,7 @@ class RegressionTreeBuilder(RegressorBuilder):
         return int(i), int(j), threshold
 
     def get_best_split(self, pixels, targets, perm, begin, end, pixel_mean_coords, overall_sum, overall_cnt, n_test_splits = 20):
-        splits = np.array([self.gen_random_split(pixel_mean_coords) for _ in xrange(n_test_splits)])
+        splits = np.array([self.gen_random_split(pixel_mean_coords) for _ in range(n_test_splits)])
         pix1 = np.array(splits[:, 0], dtype=int)
         pix2 = np.array(splits[:, 1], dtype=int)
         divisions = (pixels[perm[begin:end]][:, pix1] - pixels[perm[begin:end]][:, pix2] > splits[:, 2]).transpose()
@@ -107,7 +107,7 @@ class RegressionTree(Regressor):
 
     def get_leaf_index(self, pixels, extra=None):
         node = 0
-        for k in xrange(self.depth-1):
+        for k in range(self.depth-1):
             i, j, thresh = self.splits[node]
             node = 2*node+1
             if pixels[i] - pixels[j] > thresh:

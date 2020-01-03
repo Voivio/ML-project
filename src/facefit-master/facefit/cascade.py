@@ -26,22 +26,22 @@ class CascadedShapeRegressorBuilder(RegressorBuilder):
         assert(len(shapes) == len(images))
         assert(len(gt_shapes) == len(images))
 
-        print('\nSize of augmented dataset: {} images.\n'.format(len(images)))
+        print(('\nSize of augmented dataset: {} images.\n'.format(len(images))))
 
         weak_regressors = []
-        for j in xrange(self.n_stages):
+        for j in range(self.n_stages):
             # Calculate normalized targets.
-            deltas = [gt_shapes[i].points - shapes[i].points for i in xrange(len(images))]
+            deltas = [gt_shapes[i].points - shapes[i].points for i in range(len(images))]
             targets = np.array([util.transform_to_mean_shape(shapes[i], self.mean_shape).apply(deltas[i]).reshape((2*self.n_landmarks,))
-                                for i in xrange(len(images))])
+                                for i in range(len(images))])
 
             weak_regressor = self.weak_builder.build(images, targets, (shapes, self.mean_shape, j))
             # Update current estimates of shapes.
-            for i in xrange(len(images)):
+            for i in range(len(images)):
                 offset = weak_regressor.apply(images[i], shapes[i])
                 shapes[i].points += offset.points
             weak_regressors.append(weak_regressor)
-            print("\nBuilt outer regressor {}\n".format(j))
+            print(("\nBuilt outer regressor {}\n".format(j)))
 
         return CascadedShapeRegressor(self.n_landmarks, weak_regressors, self.mean_shape)
 
@@ -62,7 +62,7 @@ class CascadedShapeRegressor(Regressor):
 
         for i, shape in enumerate(shapes):
             init_shapes = util.perturb_init_shape(initial_shapes[i].copy(), init_num)
-            for j in xrange(init_num):
+            for j in range(init_num):
                 for r in self.weak_regressors:
                     offset = r.apply(image, init_shapes[j])
                     init_shapes[j].points += offset.points

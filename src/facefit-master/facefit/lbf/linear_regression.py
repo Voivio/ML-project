@@ -23,11 +23,11 @@ class GlobalRegressionBuilder(RegressorBuilder):
         feature_extractor = self.feature_extractor_builder.build(images, shapes, targets, (mean_shape, i_stage))
 
         print("Extracting local binary features for each image.\n")
-        features = [ list(feature_extractor.apply(images[i], shapes[i])) for i in xrange(len(images)) ]
+        features = [ list(feature_extractor.apply(images[i], shapes[i])) for i in range(len(images)) ]
         print("Features extracted.\n")
         w = np.zeros(shape=(2*n_landmarks, len(features[0])))
 
-        for lmark in xrange(2*n_landmarks):
+        for lmark in range(2*n_landmarks):
             print_dynamic("Learning linear regression coefficients for landmark coordinate {}/{}.\n".format(lmark, 2*n_landmarks))
             linreg = liblinearutil.train(list(targets[:, lmark]), features, "-s 12 -p 0 -c {}".format(1/float(len(features))))
             w_list = linreg.get_decfun()[0]

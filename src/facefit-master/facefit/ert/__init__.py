@@ -1,1 +1,1 @@
-from builder import ERTBuilder
+from .builder import ERTBuilder

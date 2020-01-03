@@ -64,7 +64,7 @@ class LocalBinaryFeaturesExtractorBuilder(FeatureExtractorBuilder):
         MU = self.MU
 
         forests = []
-        for i in xrange(n_landmarks):
+        for i in range(n_landmarks):
             print_dynamic('Building forest for landmark {}.\n'.format(i))
             landmark_targets = targets[:, 2*i:(2*i+1)+1]
             feature_extractor_builder = PixelExtractorBuilder(n_landmarks=1, n_pixels=self.n_pixels,

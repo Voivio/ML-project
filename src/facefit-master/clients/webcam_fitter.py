@@ -13,7 +13,7 @@ import hickle
 import menpodetect
 
 def add_landmarks(mat, shape):
-    for i in xrange(0, 68):
+    for i in range(0, 68):
         cv2.circle(mat, center=(int(shape.points[i][1]), int(shape.points[i][0])), radius=3, color=(0,255,0), thickness=-1)
 
 model = hickle.load(sys.argv[1], safe=False)

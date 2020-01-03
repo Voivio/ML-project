@@ -1,1 +1,1 @@
-from builder import LBFBuilder
+from .builder import LBFBuilder

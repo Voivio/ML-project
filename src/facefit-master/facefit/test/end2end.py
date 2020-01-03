@@ -62,11 +62,11 @@ def test_all(test, model_builder, test_images, train_images):
     init_mean_error = np.mean(initerr)
     fin_mean_error = np.mean(finerr)
 
-    print "Mean initial error: {}\n".format(init_mean_error)
-    print "Mean final error: {}\n".format(fin_mean_error)
+    print("Mean initial error: {}\n".format(init_mean_error))
+    print("Mean final error: {}\n".format(fin_mean_error))
 
-    test.failIfAlmostEqual(fin_mean_error, init_mean_error/5.0)
-    test.failUnlessAlmostEqual(fin_mean_error, 0, places=4)
+    test.assertNotAlmostEqual(fin_mean_error, init_mean_error/5.0)
+    test.assertAlmostEqual(fin_mean_error, 0, places=4)
 
 
 class ESRTest(unittest.TestCase):

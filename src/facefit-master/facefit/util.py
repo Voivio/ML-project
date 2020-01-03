@@ -79,7 +79,7 @@ def perturb_shapes(images, shapes, gt_shapes, boxes, n_perturbations, mode):
     normalized_offsets = np.dstack((dy, dx))[0]
 
     ret = []
-    for i in xrange(len(shapes)):
+    for i in range(len(shapes)):
         midpt = (gt_shapes[i].centre() + shapes[i].centre()) / 2
         ret.append(PointCloud((shapes[i].points-shapes[i].centre())*scale[i]
                               + midpt + shapes[i].range() * normalized_offsets[i]))
@@ -95,7 +95,7 @@ def perturb_init_shape(init_shape, num):
     scale = np.random.normal(1, 0.07, size=(num-1))
     normalized_offsets = np.dstack((dy, dx))[0]
 
-    for i in xrange(num-1):
+    for i in range(num-1):
         ret.append(PointCloud((init_shape.points-init_shape.centre())*scale[i] +
                               init_shape.centre() + init_shape.range() * normalized_offsets[i]))
     return ret
@@ -144,7 +144,7 @@ def get_median_shape(shapes):
 
     if len(shapes) > 1:
         pts = np.array([s.as_vector() for s in shapes]).transpose()
-        for k in xrange(n_landmarks*2):
+        for k in range(n_landmarks*2):
             ret[k] = np.median(pts[k])
     return PointCloud(ret.reshape(n_landmarks, 2), copy=False)
 
