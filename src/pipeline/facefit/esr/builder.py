@@ -1,7 +1,7 @@
-from . import cascade
-from .pixel_extractor import PixelExtractorBuilder
-from .fern import FernBuilder
-from .fern_cascade import FernCascadeBuilder
+from .. import cascade
+from ..pixel_extractor import PixelExtractorBuilder
+from ..esr.fern import FernBuilder
+from ..esr.fern_cascade import FernCascadeBuilder
 
 
 class ESRBuilder(cascade.CascadedShapeRegressorBuilder):

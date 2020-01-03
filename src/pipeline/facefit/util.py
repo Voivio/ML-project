@@ -7,7 +7,6 @@ from menpo.transform import AlignmentSimilarity
 from menpo.image.interpolation import scipy_interpolation
 
 
-
 def sample_image(im, points_to_sample):
     if isinstance(points_to_sample, PointCloud):
         points_to_sample = points_to_sample.points

@@ -1,10 +1,9 @@
 import numpy as np
 
-from .base import FeatureExtractor, FeatureExtractorBuilder
 from .util import sample_image
 
 
-class PixelExtractor(FeatureExtractor):
+class PixelExtractor:
     def __init__(self, n_landmarks, n_pixels, kappa, around_landmark):
         if around_landmark != -1:
             self.lmark = np.empty(n_pixels, dtype=np.int)
@@ -19,7 +18,7 @@ class PixelExtractor(FeatureExtractor):
         return sample_image(img, ret)
 
 
-class PixelExtractorBuilder(FeatureExtractorBuilder):
+class PixelExtractorBuilder:
     def __init__(self, n_landmarks, n_pixels, kappa, adaptive=False, around_landmark=-1):
         self.adaptive = adaptive
         self.n_landmarks = n_landmarks

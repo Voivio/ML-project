@@ -7,11 +7,10 @@ vectorial delta shapes.
 import numpy as np
 import cv2
 
-from .base import RegressorBuilder, Regressor
-from .util import rand_unit_vector
+from ..util import rand_unit_vector
 
 
-class FernBuilder(RegressorBuilder):
+class FernBuilder:
     def __init__(self, n_features, beta):
         self.n_features = n_features
         self.beta = beta
@@ -63,7 +62,7 @@ class FernBuilder(RegressorBuilder):
         return Fern(n_landmarks, feature_indices, bin_outputs, thresholds)
 
 
-class Fern(Regressor):
+class Fern:
     def __init__(self, n_landmarks, feature_indices, bins, thresholds):
         self.n_landmarks = n_landmarks
         self.bins = bins

@@ -4,11 +4,10 @@ from menpo.visualize import print_dynamic
 from menpo.shape import PointCloud
 
 from . import util
-from .base import RegressorBuilder, Regressor
 import numpy as np
 
 
-class InnerCascadeBuilder(RegressorBuilder):
+class InnerCascadeBuilder:
     def __init__(self, n_primitive_regressors, primitive_builder, feature_extractor_builder):
         self.n_primitive_regressors = n_primitive_regressors
         self.primitive_builder = primitive_builder
@@ -52,7 +51,7 @@ class InnerCascadeBuilder(RegressorBuilder):
         return InnerCascade((feature_extractor, primitive_regressors, mean_shape, post_data))
 
 
-class InnerCascade(Regressor):
+class InnerCascade:
     def __init__(self, data):
         feature_extractor, regressors, mean_shape, extra = data
         n_landmarks = mean_shape.n_points

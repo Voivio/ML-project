@@ -7,8 +7,8 @@ import numpy as np
 from menpo.visualize import print_dynamic
 
 # from .fern import FernBuilder
-from .inner_cascade import InnerCascadeBuilder
-from . import util
+from ..inner_cascade import InnerCascadeBuilder
+from .. import util
 
 
 class FernCascadeBuilder(InnerCascadeBuilder):

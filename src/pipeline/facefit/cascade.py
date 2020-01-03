@@ -1,11 +1,10 @@
 from copy import deepcopy
 
 from . import util
-from .base import Regressor, RegressorBuilder
 from .util import *
 
 
-class CascadedShapeRegressorBuilder(RegressorBuilder):
+class CascadedShapeRegressorBuilder:
     def __init__(self, n_stages, n_perturbations, weak_builder):
         self.n_stages = n_stages
         self.weak_builder = weak_builder
@@ -49,7 +48,7 @@ class CascadedShapeRegressorBuilder(RegressorBuilder):
         return CascadedShapeRegressor(self.n_landmarks, weak_regressors, self.mean_shape)
 
 
-class CascadedShapeRegressor(Regressor):
+class CascadedShapeRegressor:
     def __init__(self, n_landmarks, weak_regressors, mean_shape):
         self.n_landmarks = n_landmarks
         self.weak_regressors = weak_regressors
