@@ -255,6 +255,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data')
     parser.add_argument('--feat', default='high_dim', choices=['high_dim', 'faster_high_dim', 'mb_lbp'])
+    parser.add_argument('--feat-suffix', required=True)
     parser.add_argument('--debug', default=False, action='store_true')
     parser.add_argument('--detailed-debug', default=False, action='store_true')
     args, _ = parser.parse_known_args()
@@ -277,7 +278,8 @@ if __name__ == '__main__':
             with open(jpg.replace('.jpg', '.json')) as f:
                 pts = np.array(json.load(f), dtype=np.float)
             features = feat_extractor.extract(img, pts, debug=args.debug, detailed_debug=args.detailed_debug)
-            with open(jpg.replace('.jpg', '.feat.pkl'), 'wb') as f:
+            assert not os.path.exists(jpg.replace('.jpg', args.feat_suffix)), jpg.replace('.jpg', args.feat_suffix)
+            with open(jpg.replace('.jpg', args.feat_suffix), 'wb') as f:
                 pickle.dump(features, f)
     else:
         # further parse args
