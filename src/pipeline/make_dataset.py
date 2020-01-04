@@ -53,7 +53,7 @@ def make_dataset(lfw_root, split_file, feat_suffix):
     datas = []
     for i in range(n_fold):
         print("Parsing fold %d / %d" % (i, n_fold))
-        datas.append(parse_one_fold(lines[n_each * i + 1:n_each * (i + 1) + 1], lfw_root, feat_suffix))
+        datas.append(parse_one_fold(lines[n_each * i * 2 + 1:n_each * (i * 2 + 2) + 1], lfw_root, feat_suffix))
     print("\nIn total: skipped %d data, %d pos, %d neg\n" % (sum([x[-1].shape[0] for x in datas]),
                                                              sum([(x[-1] == 1).sum() for x in datas]),
                                                              sum([(x[-1] == 0).sum() for x in datas])))
