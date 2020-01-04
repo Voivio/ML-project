@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import pickle
 import os
+from sklearn.decomposition import PCA
 
 
 class Compressor(metaclass=ABCMeta):
@@ -31,7 +32,7 @@ class Compressor(metaclass=ABCMeta):
         raise NotImplementedError
 
 
-class PCA(Compressor):
+class PCACompressor(Compressor):
     # TODO: reimplement or delete when releasing code
     def __init__(self, n_components: int, *args, **kwargs):
         self.n_components = n_components
