@@ -55,7 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('--test-fold', default=9, type=int)
     parser.add_argument('--classifier', required=True, choices=list(CLASSIFIER_MAP.keys()))
     parser.add_argument('--norm', action='store_true')
-    parser.add_argument('--agg-feature', default='minus-abs', choices=['minus-abs', 'mul_minus-abs'])
+    parser.add_argument('--agg-feature', default='minus-abs', choices=Model.AGG_CHOICES)
     parser.add_argument('--n-component', type=int)  # compressor
     parser.add_argument('--dump', default=None)
     args = parser.parse_args()

@@ -3,7 +3,7 @@ from sklearn import metrics
 
 
 class Model:
-    AGG_CHOICES = ['minus-abs', 'mul_minus-abs']
+    AGG_CHOICES = ['minus-abs', 'mul_minus-abs', 'mul', 'concat']
 
     def __init__(self, agg, compressor, classifier, default_option=None):
         self.agg = agg
@@ -17,8 +17,17 @@ class Model:
         x1, x2 = x.transpose(1, 0, 2)
         if self.agg == 'minus-abs':
             return np.abs(x1 - x2), y, z
+        elif self.agg == 'mul':
+            return x1 * x2, y, z
         elif self.agg == 'mul_minus-abs':
             return np.concatenate([x1 - x2, x1 * x2], axis=-1), y, z
+        elif self.agg == 'concat':
+            if y is not None:
+                return np.concatenate([np.concatenate([x1, x2], axis=-1),
+                                       np.concatenate([x2, x1], axis=-1)], axis=0),\
+                       np.concatenate([y, y], axis=0), None if z is None else np.concatenate([z, z], axis=0)
+            else:
+                return np.concatenate([x1, x2], axis=-1), y, z
         else:
             raise ValueError("agg cannot be %s" % self.agg)
 
