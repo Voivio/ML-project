@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 import pickle
 import os
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 
 
 class Classifier(metaclass=ABCMeta):
@@ -48,3 +49,22 @@ class LogisticRegressionClassifier(Classifier):
     def load(self, path):
         with open(path, 'rb') as f:
             self.lr = pickle.load(f)
+
+
+class SVCClassifier(Classifier):
+    def __init__(self, *args, **kwargs):
+        self.svc = SVC(*args, **kwargs)
+
+    def fit(self, X, y):
+        self.svc.fit(X, y)
+
+    def predict(self, X):
+        return self.svc.predict(X)
+
+    def _save(self, path):
+        with open(path, 'wb') as f:
+            pickle.dump(f, self.svc)
+
+    def load(self, path):
+        with open(path, 'rb') as f:
+            self.svc = pickle.load(f)

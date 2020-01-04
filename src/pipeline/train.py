@@ -5,7 +5,7 @@ from sklearn import metrics  # TODO: need to implement them myself
 
 # from data_utils import load_labels
 from compress_feature import PCACompressor
-from classifiers import LogisticRegressionClassifier
+from classifiers import LogisticRegressionClassifier, SVCClassifier
 
 '''
 Usage:
@@ -32,14 +32,15 @@ def aggregate_data(x, y, agg):
 
 def evaluate(classifier, x, y):
     y_pred = classifier.predict(x)
-    print("\tAcc score  = %.3f" % metrics.accuracy_score(y, y_pred))
-    print("\tF1 score   = %.3f" % metrics.f1_score(y, y_pred))
+    print("\tAcc score  = %.2f" % (metrics.accuracy_score(y, y_pred) * 100))
+    print("\tF1 score   = %.2f" % (metrics.f1_score(y, y_pred) * 100))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()  # Possibly will configure: compressor, trainer
     parser.add_argument('--train')
     parser.add_argument('--test')
+    parser.add_argument('--classifier', default='logistic_regression', choices=['logistic_regression', 'svm'])
     parser.add_argument('--agg-feature', default='minus-abs', choices=['minus-abs', ])  # feature aggregation
     parser.add_argument('--n-compressed-dim', type=int)  # compressor
     parser.add_argument('--save-compressor', default=None)  # save dir
@@ -58,7 +59,12 @@ if __name__ == '__main__':
     test_x = compressor.transform(test_x)
     compressor.save(args.save_compressor)
 
-    classifier = LogisticRegressionClassifier()
+    if args.classifier == 'logistic_regression':
+        classifier = LogisticRegressionClassifier()
+    elif args.classifier == 'svm':
+        classifier = SVCClassifier()
+    else:
+        raise ValueError("model cannot be %s" % args.model)
     classifier.fit(train_x, train_y)
     classifier.save(args.save_classifier)
 
