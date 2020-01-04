@@ -33,8 +33,8 @@ class Classifier(metaclass=ABCMeta):
 
 
 class LogisticRegressionClassifier(Classifier):
-    def __init__(self, *args, **kwargs):
-        self.lr = LogisticRegression(*args, **kwargs)
+    def __init__(self, **kwargs):
+        self.lr = LogisticRegression(**kwargs)
 
     def fit(self, X, y):
         self.lr.fit(X, y)
@@ -52,8 +52,8 @@ class LogisticRegressionClassifier(Classifier):
 
 
 class SVCClassifier(Classifier):
-    def __init__(self, *args, **kwargs):
-        self.svc = SVC(*args, **kwargs)
+    def __init__(self, **kwargs):
+        self.svc = SVC(**kwargs)
 
     def fit(self, X, y):
         self.svc.fit(X, y)
@@ -68,3 +68,16 @@ class SVCClassifier(Classifier):
     def load(self, path):
         with open(path, 'rb') as f:
             self.svc = pickle.load(f)
+
+
+CLASSIFIER_MAP = dict(
+    logistic_regression=LogisticRegressionClassifier,
+    classifier=SVCClassifier
+)
+
+
+def get_classifier(name, load=None, **kwargs):
+    classifier = CLASSIFIER_MAP[name](**kwargs)
+    if load is not None:
+        classifier.load(load)
+    return classifier

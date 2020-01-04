@@ -57,3 +57,15 @@ class PCACompressor(Compressor):
         with open(path, 'rb') as f:
             self.pca = pickle.load(f)
             assert self.pca.n_components_ == self.n_components
+
+
+COMPRESSOR_MAP = dict(
+    pca=PCACompressor
+)
+
+
+def get_compressor(name, load=None, **kwargs):
+    compressor = COMPRESSOR_MAP[name](**kwargs)
+    if load is not None:
+        compressor.load(load)
+    return compressor
