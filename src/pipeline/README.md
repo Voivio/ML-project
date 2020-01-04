@@ -24,6 +24,32 @@ MB LBP on test split 9
 |                                     | 512     |               | yes  |                     | x            | 58.83, 56.89 |
 |                                     | 256     | mul           |      |                     | 94.20, 94.16 | 73.33, 69.92 |
 
+## New results
+
+Logistic Regression:
+
+* eps = 1e-6
+* iters = 100000 (inf)
+* beta1 = 0.9
+* beta2 = 0.999
+* eps_stable = 1e-8
+
+
+
+Feature scales = [3, 9, 17, 25, 49]
+
+| n    | agg       | lr   | train acc, f1 | test acc, f1 |
+| ---- | --------- | ---- | ------------- | ------------ |
+| 256  | minus-abs | 0.1  | 81.17, 80.94  | 78.00, 77.78 |
+|      |           | 0.01 | 81.59, 81.38  | 79.33, 79.05 |
+|      |           | 1e-3 | 81.81, 81.64  | 78.17, 77.76 |
+
+
+
+I choose the best 
+
+
+
 ## Codes
 
 * facealigner.py: a stand-alone module. Used to transform original image into face & points

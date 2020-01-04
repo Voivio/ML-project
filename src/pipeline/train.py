@@ -56,6 +56,9 @@ if __name__ == '__main__':
     parser.add_argument('--n-components', default=256, type=int)
     # Logistic Regression
     parser.add_argument('--lr', default=1e-3, type=float)
+    parser.add_argument('--beta1', default=0.9, type=float)
+    parser.add_argument('--beta2', default=0.999, type=float)
+    parser.add_argument('--eps-stable', default=1e-8, type=float)
     parser.add_argument('--eps', default=1e-6, type=float)
     parser.add_argument('--iters', default=1500, type=int)
     parser.add_argument('--verbose', action='store_true')
