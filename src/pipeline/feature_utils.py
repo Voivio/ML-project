@@ -10,6 +10,7 @@ import glob
 from tqdm import tqdm
 from skimage.measure import block_reduce
 
+
 # from data_utils import load_data
 
 
@@ -208,6 +209,38 @@ class FasterHighDimensionalLBP:
         return np.array(features, dtype=np.float)
 
 
+class MB_LBP:
+    # Ref: https://blog.csdn.net/jxch____/article/details/80565601
+
+    def __init__(self, parser: argparse.ArgumentParser):
+        parser.add_argument('--scales', type=int, default=[1, 3, 7, 13, 25])
+        args, _ = parser.parse_known_args()
+        self.scales = args.scales
+
+    def mb_lbp(self, img, x, y, bs):
+        patch = cv2.getRectSubPix(img, (bs * 3, bs * 3), (x, y))
+        patch = block_reduce(patch, (bs, bs), func=np.mean)
+        return [float(patch[i, j] > patch[1, 1]) for i, j in
+                [(0, 0), (0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1), (2, 2)]]
+
+    def extract(self, img, points, debug=False, detailed_debug=False):
+        # img: (H, W)
+        # points: (N, 2)
+        assert len(img.shape) == 2  # (H, W)
+        if debug:
+            show_img_with_points(img, points, 'orig')
+        # normalize
+        img_normalized = cv2.equalizeHist(img)
+        if debug:
+            show_img_with_points(img_normalized, points, 'normalized')
+        # extract LBP
+        features = []
+        for s in self.scales:
+            for x, y in points:
+                features += self.mb_lbp(img_normalized, x, y, s)
+        return np.array(features, dtype=np.float)
+
+
 # def extract_and_dump(lbp: HighDimensionalLBP, data: str, output: str):
 #     points, _, imgs = load_data(data, cv2.IMREAD_GRAYSCALE)
 #     features = []
@@ -221,14 +254,15 @@ class FasterHighDimensionalLBP:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data')
-    parser.add_argument('--feat', default='high_dim', choices=['high_dim', 'faster_high_dim'])
+    parser.add_argument('--feat', default='high_dim', choices=['high_dim', 'faster_high_dim', 'mb_lbp'])
     parser.add_argument('--debug', default=False, action='store_true')
     parser.add_argument('--detailed-debug', default=False, action='store_true')
     args, _ = parser.parse_known_args()
 
     feat_cls = dict(
         high_dim=HighDimensionalLBP,
-        faster_high_dim=FasterHighDimensionalLBP
+        faster_high_dim=FasterHighDimensionalLBP,
+        mb_lbp=MB_LBP
     )[args.feat]
     feat_extractor = feat_cls(parser)
 
