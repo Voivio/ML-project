@@ -3,7 +3,6 @@ import os
 import cv2
 import numpy as np
 import argparse
-import pickle
 from tqdm import tqdm
 
 
@@ -69,7 +68,8 @@ def make_dataset(data_root, split_file, ignore_error=True):
             return img, pts
 
     data = []
-    for i, line in tqdm(enumerate(lines[1:])):
+    cls = [0, 0]
+    for i, line in tqdm(list(enumerate(lines[1:]))):
         if i < n:
             name1, idx1, idx2 = line.strip().split('\t')
             name2 = name1
@@ -84,7 +84,9 @@ def make_dataset(data_root, split_file, ignore_error=True):
         if pts2 is None:
             continue
         data.append(dict(label=label, points_1=pts1, img_1=img1, points_2=pts2, img_2=img2))
+        cls[label] += 1
 
+    print("Data: total = %d, neg = %d, pos = %d" % (len(data), cls[0], cls[1]))
     return data
 
 
@@ -99,5 +101,5 @@ if __name__ == '__main__':
     data = make_dataset(args.data_root, args.split_file, ignore_error=args.ignore_error)
     assert not os.path.exists(args.dump_file)
     with open(args.dump_file, 'w') as f:
-        pickle.dump(data, f)
+        json.dump(data, f)
     print("Dump to %s" % args.dump_file)
