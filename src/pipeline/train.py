@@ -44,8 +44,7 @@ def train_and_evaluate(train, test, args):
     print("Evaluate on training set")
     model.evaluate(train)
     print("Evaluate on testing set")
-    model.evaluate(test)
-    return model
+    return model, model.evaluate(test)
 
 
 if __name__ == '__main__':
@@ -69,11 +68,19 @@ if __name__ == '__main__':
 
     folds = load_data(args.data)
     if args.test_fold < 0:
-        raise NotImplementedError
+        accs = []
+        f1s = []
+        for i in range(10):
+            print("\nOn fold %d:" % i)
+            train, test = get_fold(folds, i)
+            _, (acc, f1) = train_and_evaluate(train, test, args)
+            accs.append(acc)
+            f1s.append(f1)
+        print("\nMean acc = %.2f\nMean f1 = %.2f" % (float(np.mean(accs)), float(np.mean(f1s))))
     else:
         assert args.test_fold < 10
         train, test = get_fold(folds, args.test_fold)
-        model = train_and_evaluate(train, test, args)
+        model, _ = train_and_evaluate(train, test, args)
         if args.dump is not None:
             assert not os.path.exists(args.dump)
             with open(args.dump, 'wb') as f:
