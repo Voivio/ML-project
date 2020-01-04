@@ -59,13 +59,16 @@ def init_lbp_mapping():
 
 def lbp_hist(img, lbp_mapping_dict):
     h, w = img.shape
-    hist = np.zeros((len(lbp_mapping_dict),), dtype=np.int)
+    hist = np.zeros((len(lbp_mapping_dict) if lbp_mapping_dict is not None else (1 << 8),), dtype=np.int)
     for i in range(1, h - 1):
         for j in range(1, w - 1):
             local_pattern = [img[i - 1, j], img[i - 1, j - 1], img[i, j - 1], img[i + 1, j - 1], img[i + 1, j],
                              img[i + 1, j + 1], img[i, j + 1], img[i - 1, j + 1]]
-            raw_code = "".join([str(int(x > img[i, j])) for x in local_pattern])
-            lbp_code = lbp_mapping_dict[raw_code]
+            if lbp_mapping_dict is not None:
+                raw_code = "".join([str(int(x > img[i, j])) for x in local_pattern])
+                lbp_code = lbp_mapping_dict[raw_code]
+            else:
+                lbp_code = int("".join([str(int(x > img[i, j])) for x in local_pattern]), 2)
             hist[lbp_code] += 1
     return hist
 
@@ -78,13 +81,24 @@ class HighDimensionalLBP:
         parser.add_argument('--patch-size', type=int, default=10)
         parser.add_argument('--num-cell-x', type=int, default=4)
         parser.add_argument('--num-cell-y', type=int, default=4)
+        parser.add_argument('--use-dict', action='store_true')
         args, _ = parser.parse_known_args()
         self.scales = args.scales
         self.patch_size = args.patch_size
         self.num_cell_x = args.num_cell_x
         self.num_cell_y = args.num_cell_y
         # self.uniform = uniform
-        self.lbp_mapping_dict = init_lbp_mapping()
+        if args.use_dict:
+            self.lbp_mapping_dict = init_lbp_mapping()
+        else:
+            self.lbp_mapping_dict = None
+
+    @property
+    def n_lbp(self):
+        if self.lbp_mapping_dict is None:
+            return (1 << 8)
+        else:
+            return len(self.lbp_mapping_dict)
 
     def extract(self, img, points, debug=False, detailed_debug=False):
         # img: (H, W)
@@ -125,7 +139,7 @@ class HighDimensionalLBP:
                         hist = lbp_hist(patch, self.lbp_mapping_dict)
                         if detailed_debug:
                             plt.figure()
-                            plt.bar(x=range(len(self.lbp_mapping_dict)), height=hist)
+                            plt.bar(x=range(self.n_lbp), height=hist)
                             plt.title("hist for cropped patch at cell {:d}, {:d}".format(j, k))
                             plt.show()
                         features += list(hist)
