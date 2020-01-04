@@ -1,0 +1,20 @@
+%!TEX root = ../Draft.tex
+\section{实验与评估}
+\label{evaluation}
+
+\subsection{具体实现}
+
+在\ref{model}一章中，我们介绍了模型的工作原理和部分实验细节，这里将这些内容总结一下并补充一些细节。
+
+首先，对于面部关键点检测，我们使用的超参数如\ref{tab:esr}所示。
+
+\begin{table}[h]
+	\begin{tabularx}{\textwidth}{|X|X|X|X|X|X|c|}
+		\hline
+		P& T & F &  K& $N_{aug}$& $\beta$& $\kappa$\\ 
+		\hline 
+		400& 10 & 5  & 500 & 20 & 1000& 0.3 TupleDist\\ 
+		\hline
+	\end{tabularx} 
+	\caption{面部关键点检测使用的超参数}
+\end{table}

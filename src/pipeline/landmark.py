@@ -1,7 +1,7 @@
 import cv2
 import dlib
 import os
-import pickle
+import json
 
 # set up the 68 point facial landmark detector
 detector = dlib.get_frontal_face_detector()
@@ -16,7 +16,7 @@ for i, people in enumerate(people_names):
     # print('people {} : {} / {}'.format(people, i, len(people_names)))
     img_names = os.listdir(data_path + people)
     for img in img_names:
-        pts_file = data_path + people + '/' + img[:-3] + 'pkl'
+        json_file = data_path + people + '/' + img[:-3] + 'json'
         # print(pts_file)
         img_gray = cv2.imread(data_path + people + '/' + img, 0)
 
@@ -37,13 +37,14 @@ for i, people in enumerate(people_names):
         for i in range(0, landmarks.num_parts):
         	landmarks_list.append((landmarks.part(i).x, landmarks.part(i).y))
 
+        face = [face.left(), face.top(), face.right(), face.bottom()]
         dict = {
             'face' : face,
             'landmarks' : landmarks_list
         }
         # dump landmarks
-        with open(pts_file, 'wb') as f:
-            pickle.dump(dict, f)
+        with open(json_file, 'w') as f:
+            json.dump(dict, f)
 
     	# # for each landmark, plot and write number
     	# for landmark_num, xy in enumerate(landmarks_list, start = 1):
