@@ -2,16 +2,14 @@ import argparse
 import os
 import cv2
 import numpy as np
+import pickle
 
-from classifier import get_classifier, CLASSIFIER_MAP
-from compressor import get_compressor
 from landmark_detector import get_detector
 from facealigner import align  # TODO: we suppose we use default paras
 from feature_utils import MB_LBP
-from train import aggregate_data
 
 
-def predict(img1, img2, detector, feature, agg, compressor, classifier, default_option):
+def predict(img1, img2, detector, feature, model):
     # img1
     pts1 = detector.detect(img1)
     if pts1 is None:
@@ -26,32 +24,21 @@ def predict(img1, img2, detector, feature, agg, compressor, classifier, default_
     feat1 = feature.extract(img1, pts1)
     feat2 = feature.extract(img2, pts2)
     # aggregate
-    x = aggregate_data((np.array([[feat1, feat2]], dtype=float), None, None), agg)
-    x = compressor.transform(x)
-    return int(classifier.predict(x).squeeze())
+    feat = np.array([[feat1, feat2]], dtype=float)
+    return model.infer(feat)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('data')
     parser.add_argument('txt')
-    parser.add_argument('--classifier', choices=list(CLASSIFIER_MAP.keys()))
-    parser.add_argument('--load-compressor')
-    parser.add_argument('--load-classifier')
-    parser.add_argument('--load-default-option')
-    parser.add_argument('--agg', default='abs-minus', choices=['minus-abs', 'mul_minus-abs'])
+    parser.add_argument('--model')
     args, _ = parser.parse_known_args()
 
     detector = get_detector()
-
     feature = MB_LBP(parser)
-
-    compressor = get_compressor('pca', 2333)
-    compressor.load(args.load_compressor)
-
-    classifier = get_classifier(args.classifier)
-    classifier.load(args.load_classifier)
-
+    with open(args.model, 'rb') as f:
+        model = pickle.load(f)
     args = parser.parse_args()
     print(args)
 
@@ -63,7 +50,7 @@ if __name__ == '__main__':
         img1, img2 = os.listdir(os.path.join(args.data, k))
         img1 = cv2.imread(img1, os.path.join(args.data, k, img1))
         img2 = cv2.imread(img2, os.path.join(args.data, k, img2))
-        output[k] = predict(img1, img2, detector, feature, args.agg, compressor, classifier, default_option)
+        output[k] = predict(img1, img2, detector, feature, model)
 
     with open(args.txt, 'w') as f:
         for k, v in output.items():

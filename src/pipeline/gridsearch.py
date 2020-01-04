@@ -5,7 +5,18 @@ import numpy as np
 
 from compressor import get_compressor
 from classifier import get_classifier
-from train import load_data, aggregate_data
+from train import load_data
+
+
+def aggregate_data(data, agg):
+    x, y, z = data
+    x1, x2 = x.transpose(1, 0, 2)
+    if agg == 'minus-abs':
+        return np.abs(x1 - x2), y, z
+    elif agg == 'mul_minus-abs':
+        return np.concatenate([x1 - x2, x1 * x2], axis=-1), y, z
+    else:
+        raise ValueError("agg cannot be %s" % agg)
 
 
 class Ours(BaseEstimator, ClassifierMixin):
@@ -63,13 +74,12 @@ def print_best_score(gsearch, param_test):
 if __name__ == '__main__':
     params = dict(
         # n_component=[64, 128, 256, 512, 1024, 2048, 4096],
-        # C=[0.01, 0.05, 0.1, 0.5, 1, 2, 3, 10],
         # C=[0.01, 0.1, 1],
-        C=[10, 20],
+        C=[1, ],
         # gamma=['scale', 'auto', 0.01, 0.1, 1, 10],
         # shrinking=[True, False],
         # tol=[1e-5, 1e-4, 1e-3, 1e-2, 0.1],
-        # tol=[1e-5, 1e-4, 1e-3, 1e-2, 0.1]
+        tol=[1e-3, ],
     )
     gs = GridSearchCV(OursSVM(1024), params, n_jobs=4)
 
