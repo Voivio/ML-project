@@ -35,7 +35,7 @@ def get_fold(folds, test_fold: int):
 
 def train_and_evaluate(train, test, args):
     compressor = PCA(args.n_components)
-    classifier = LogisticRegression(args.lr, args.iters, verbose=args.verbose)
+    classifier = LogisticRegression(args.lr, eps=args.eps, iters=args.iters, verbose=args.verbose)
 
     model = Model(args.agg_feature, compressor, classifier)
 
@@ -56,6 +56,7 @@ if __name__ == '__main__':
     parser.add_argument('--n-components', default=256, type=int)
     # Logistic Regression
     parser.add_argument('--lr', default=1e-3, type=float)
+    parser.add_argument('--eps', default=1e-6, type=float)
     parser.add_argument('--iters', default=1500, type=int)
     parser.add_argument('--verbose', action='store_true')
     # Model
