@@ -4,12 +4,12 @@ import os
 import pickle
 import json
 
-# # set up the 68 point facial landmark detector
-# detector = dlib.get_frontal_face_detector()
-# predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+# set up the 68 point facial landmark detector
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 #
-# # bring in the input image
-# data_path = '../../data/lfw/'
+# bring in the input image
+data_path = '../../data/lfw/'
 # people = 'Giulietta_Masina'
 # img_names = os.listdir(data_path + people)
 # img = img_names[0]
@@ -43,10 +43,41 @@ import json
 #
 # cv2.imwrite('img.png', img_color)
 
-dict = {
-    'face' : [1,2,3,4],
-    'landmarks' : [(1,2), (3,4)]
-}
+# dict = {
+#     'face' : [1,2,3,4],
+#     'landmarks' : [(1,2), (3,4)]
+# }
+#
 
-with open('test.json', 'w') as f:
-    json.dump(dict, f)
+with open('nofacelist.txt', 'r') as f:
+    for line in f:
+        # print(line[:-1].split('_'))
+        pieces = line[:-1].split('_')
+        people = '_'.join(pieces[:-1])
+        json_file = data_path + people + '/' + line[:-4] + 'json'
+        # print(data_path + people + '/' + line[:-1])
+        img = cv2.imread(data_path + people + '/' + line[:-1])
+        faces_in_image = detector(img, 0)
+
+        try:
+            face = faces_in_image[0]
+        except IndexError as e:
+            # error_name_list.append(people + '\t' + str(i) + '\n')
+            print('%s'%(line[:-1]))
+            continue
+
+        landmarks = predictor(img, face)
+
+        # unpack the 68 landmark coordinates from the dlib osbject into a list
+        landmarks_list = []
+        for i in range(0, landmarks.num_parts):
+        	landmarks_list.append((landmarks.part(i).x, landmarks.part(i).y))
+
+        face = [face.left(), face.top(), face.right(), face.bottom()]
+        dict = {
+            'face' : face,
+            'landmarks' : landmarks_list
+        }
+        # dump landmarks
+        with open(json_file, 'w') as f:
+            json.dump(dict, f)
