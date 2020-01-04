@@ -9,6 +9,7 @@ import json
 import matplotlib.pyplot as plt
 import os
 from tqdm import tqdm
+import glob
 
 from data_utils import LFW_merge_file_lists
 
@@ -111,17 +112,35 @@ def align(image, points, desiredLeftEye=None, desiredFaceWidth=256, desiredFaceH
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-root', required=True)
-    parser.add_argument('--list', nargs='+', required=True)
+    parser.add_argument('--list', nargs='+', default=None)
     parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--ignore-error', action='store_true')
+    parser.add_argument('--ignore-done', action='store_true')
     parser.add_argument('--desired-left-eye-x', default=0.35, type=float)
     parser.add_argument('--desired-left-eye-y', default=0.35, type=float)
     parser.add_argument('--desired-width', default=256, type=int)
     args = parser.parse_args()
 
-    jpg_list = LFW_merge_file_lists(args.list, data_root=args.data_root, suffix='.jpg')
+    if args.list is not None:
+        jpg_list = LFW_merge_file_lists(args.list, data_root=args.data_root, suffix='.jpg')
+    else:
+        jpg_list = sorted(list(glob.glob('{}/lfw/*/*_????.jpg'.format(args.data_root))))
+
     for jpg_fname in tqdm(jpg_list):
         img = cv2.imread(jpg_fname)
         json_fname = jpg_fname.replace('.jpg', '.json')
+        # skip invalid data if ignore-error
+        if not os.path.exists(json_fname):
+            if args.ignore_error:
+                print("%s doesn't exist! Skip it." % json_fname)
+                continue
+            else:
+                raise ValueError("%s doesn't exist!" % json_fname)
+        # skip done if already transformed
+        if os.path.exists(jpg_fname.replace('.jpg', '.transformed.jpg')) and os.path.exists(
+                json_fname.replace('.json', '.transformed.json')) and args.ignore_done:
+            continue
+        # transform
         with open(json_fname) as f:
             data = json.load(f)
         points = np.array(data['landmarks'], dtype=np.int)
