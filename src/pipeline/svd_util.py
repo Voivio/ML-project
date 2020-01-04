@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 
 
 def randomized_range_finder(A, size, n_iter, power_iteration_normalizer='auto'):
@@ -22,15 +23,15 @@ def randomized_range_finder(A, size, n_iter, power_iteration_normalizer='auto'):
             Q = np.dot(A, Q)
             Q = np.dot(A.T, Q)
         elif power_iteration_normalizer == 'LU':
-            Q, _ = np.linalg.lu(np.dot(A, Q), permute_l=True)
-            Q, _ = np.linalg.lu(np.dot(A.T, Q), permute_l=True)
+            Q, _ = scipy.linalg.lu(np.dot(A, Q), permute_l=True)
+            Q, _ = scipy.linalg.lu(np.dot(A.T, Q), permute_l=True)
         elif power_iteration_normalizer == 'QR':
-            Q, _ = np.linalg.qr(np.dot(A, Q), mode='economic')
-            Q, _ = np.linalg.qr(np.dot(A.T, Q), mode='economic')
+            Q, _ = scipy.linalg.qr(np.dot(A, Q), mode='economic')
+            Q, _ = scipy.linalg.qr(np.dot(A.T, Q), mode='economic')
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = np.linalg.qr(np.dot(A, Q), mode='economic')
+    Q, _ = scipy.linalg.qr(np.dot(A, Q), mode='economic')
     return Q
 
 
@@ -73,7 +74,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     B = np.dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, V = np.linalg.svd(B, full_matrices=False)
+    Uhat, s, V = scipy.linalg.svd(B, full_matrices=False)
 
     del B
     U = np.dot(Q, Uhat)
