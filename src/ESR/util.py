@@ -111,7 +111,7 @@ def alignShapeToBox(shape0, box0, box):
     # shape = np.zeros(shape0.shape)
     box = np.array(box, dtype=np.float).reshape(2, 2)
     box0 = np.array(box0, dtype=np.float).reshape(2, 2)
-    scale = box[1, 0] / box0[1, 0]
+    scale = (box[1,0] - box[0,0]) / (box0[1, 0] - box[0,0])
     # align the center of the shape to the center of the box
     # box_c_x, boc_c_y = np.mean(box, 0)
     xc, yc = np.mean(box, 0)
@@ -121,34 +121,31 @@ def alignShapeToBox(shape0, box0, box):
 
     return shape
 
+def estimateTransform(p, q):
+    n, m = p.shape
 
-#
-#
-# def estimateTransform(source_shape, target_shape):
-#     n, m = source_shape.shape
-#
-#     mu_source = np.mean(source_shape, 0)
-#     mu_target = np.mean(target_shape, 0)
-#
-#     d_source = source_shape - tile(mu_source, (n, 1))
-#     sig_source2 = np.sum(d_source * d_source) / n
-#
-#     d_target = target_shape - repmat(mu_target, n, 1)
-#     sig_target2 = np.sum(d_target * d_target)) / n
-#
-#     sig_source_target = d_target.T.dot(d_source) / n
-#
-#     det_sig_source_target = np.linalg.det(sig_p_target)
-#     S = np.eye(m)
-#     if det_sig_source_target < 0:
-#         S[n - 1, m - 1] = -1
-#
-#     u, d, vh = np.linalg.svd(sig_source_target, full_matrices=True)
-#
-#     R = u * d.dot(vh)
-#     s = np.trace(d * S) / sig_source2
-#     t = mu_target.T - s * R.dot(mu_p.T)
-#     return s, R, t
+    mu_p = np.mean(p, 0)
+    mu_q = np.mean(q, 0)
+
+    dp = p - np.tile(mu_p, (n, 1))
+    sig_p2 = np.sum(dp * dp) / n
+
+    dq = q - np.tile(mu_q, (n, 1))
+    sig_q2 = np.sum(q * q) / n
+
+    sig_pq = dq.T.dot(dp) / n
+
+    det_sig_pq = np.linalg.det(sig_pq)
+    S = np.eye(m)
+    if det_sig_pq < 0:
+        S[n - 1, m - 1] = -1
+
+    u, d, vh = np.linalg.svd(sig_pq, full_matrices=True)
+
+    R = u*d.dot(vh)
+    s = np.trace(d*S) / sig_p2
+    t = mu_q.T - s * R.dot(mu_p.T)
+    return s, R, t
 #
 #
 # def computeMeanShape(train_set):
@@ -414,6 +411,15 @@ def alignShapeToBox(shape0, box0, box):
 #             print('Maxerror : {}'.format(maxError))
 #             return trainset
 
+def evaluateFern(val, fern):
+    F = len(fern.thresholds)
+    binidx = 0
+    for i in range(F):
+        if val[i] >= fern.thresholds[i]:
+            binidx = binidx + 2^(i)
+
+    output = fern.outputs[binidx,:]
+    return output
 
 # class FernClassifier:
 #
