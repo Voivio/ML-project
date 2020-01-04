@@ -1,30 +1,31 @@
-import json
+# import json
 import os
-import cv2
+# import cv2
 import numpy as np
 import argparse
+import pickle
 from tqdm import tqdm
 
 
-def load_data(json_fname, flag=cv2.IMREAD_GRAYSCALE):
-    with open(json_fname) as f:
-        data = json.load(f)
-    points = []
-    imgs = []
-    labels = []
-    for d in data:
-        labels.append(d['label'])
-        points.append(d['points_1'])  # 2 img -> 1 label
-        imgs.append(cv2.imread(d['img_1'], flag))
-        points.append(d['points_2'])
-        imgs.append(cv2.imread(d['img_2'], flag))
-    return np.array(points, dtype=np.float), np.array(labels, dtype=np.int), imgs
-
-
-def load_labels(json_fname):
-    with open(json_fname) as f:
-        data = json.load(f)
-    return np.array([x['label'] for x in data], dtype=np.int)
+# def load_data(json_fname, flag=cv2.IMREAD_GRAYSCALE):
+#     with open(json_fname) as f:
+#         data = json.load(f)
+#     points = []
+#     imgs = []
+#     labels = []
+#     for d in data:
+#         labels.append(d['label'])
+#         points.append(d['points_1'])  # 2 img -> 1 label
+#         imgs.append(cv2.imread(d['img_1'], flag))
+#         points.append(d['points_2'])
+#         imgs.append(cv2.imread(d['img_2'], flag))
+#     return np.array(points, dtype=np.float), np.array(labels, dtype=np.int), imgs
+#
+#
+# def load_labels(json_fname):
+#     with open(json_fname) as f:
+#         data = json.load(f)
+#     return np.array([x['label'] for x in data], dtype=np.int)
 
 
 def LFW_file_name(data_root, name, index, suffix='.jpg'):
@@ -48,26 +49,25 @@ def LFW_merge_file_lists(lists, data_root=None, suffix='.jpg'):
     return sorted(list(output))
 
 
-def make_dataset(data_root, split_file, ignore_error=True):
+def make_dataset_from_pkl(data_root, split_file, suffix, ignore_error=True):
     with open(split_file) as f:
         lines = f.readlines()
     n = int(lines[0].strip())
 
     def read(name, index):
-        img = LFW_file_name(data_root, name, int(index), suffix='.transformed.jpg')
-        pts = LFW_file_name(data_root, name, int(index), suffix='.transformed.json')
-        if not os.path.exists(pts):
+        fname = LFW_file_name(data_root, name, int(index), suffix='.transformed' + suffix)
+        if not os.path.exists(fname):
             if ignore_error:
-                print("%s doesn't exist, skip it!" % pts)
-                return img, None
+                print("%s doesn't exist, skip it!" % fname)
+                return None
             else:
-                raise ValueError("%s not exist" % pts)
+                raise ValueError("%s not exist" % fname)
         else:
-            with open(pts) as f:
-                pts = json.load(f)
-            return img, pts
+            with open(fname, 'rb') as f:
+                return pickle.load(f)
 
-    data = []
+    features = []
+    labels = []
     cls = [0, 0]
     for i, line in tqdm(list(enumerate(lines[1:]))):
         if i < n:
@@ -77,17 +77,18 @@ def make_dataset(data_root, split_file, ignore_error=True):
         else:
             name1, idx1, name2, idx2 = line.strip().split('\t')
             label = 0
-        img1, pts1 = read(name1, idx1)
-        if pts1 is None:
+        x1 = read(name1, idx1)
+        if x1 is None:
             continue
-        img2, pts2 = read(name2, idx2)
-        if pts2 is None:
+        x2 = read(name2, idx2)
+        if x2 is None:
             continue
-        data.append(dict(label=label, points_1=pts1, img_1=img1, points_2=pts2, img_2=img2))
+        features.append([x1, x2])
+        labels.append(label)
         cls[label] += 1
 
-    print("Data: total = %d, neg = %d, pos = %d" % (len(data), cls[0], cls[1]))
-    return data
+    print("Data: total = %d, neg = %d, pos = %d" % (len(features), cls[0], cls[1]))
+    return np.array(features, dtype=np.float), np.array(labels, dtype=np.int)
 
 
 if __name__ == '__main__':
@@ -97,9 +98,10 @@ if __name__ == '__main__':
     parser.add_argument('--split-file', required=True)
     parser.add_argument('--dump-file', required=True)
     parser.add_argument('--ignore-error', action='store_true')
+    parser.add_argument('--suffix', required=True)
     args = parser.parse_args()
-    data = make_dataset(args.data_root, args.split_file, ignore_error=args.ignore_error)
+    train_data, train_labels = make_dataset_from_pkl(args.data_root, args.split_file, ignore_error=args.ignore_error, suffix=args.suffix)
     assert not os.path.exists(args.dump_file)
-    with open(args.dump_file, 'w') as f:
-        json.dump(data, f)
+    with open(args.dump_file, 'wb') as f:
+        pickle.dump((train_data, train_labels), f)
     print("Dump to %s" % args.dump_file)

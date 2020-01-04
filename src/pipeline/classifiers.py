@@ -12,6 +12,8 @@ class Classifier(metaclass=ABCMeta):
         raise NotImplementedError
 
     def save(self, path):
+        if path is None:
+            return
         assert not os.path.exists(path)
         self._save(path)
 

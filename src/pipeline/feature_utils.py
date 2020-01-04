@@ -213,7 +213,7 @@ class MB_LBP:
     # Ref: https://blog.csdn.net/jxch____/article/details/80565601
 
     def __init__(self, parser: argparse.ArgumentParser):
-        parser.add_argument('--scales', type=int, default=[1, 3, 7, 13, 25])
+        parser.add_argument('--scales', nargs='+', type=int, default=[1, 3, 7, 13, 25])
         args, _ = parser.parse_known_args()
         self.scales = args.scales
 

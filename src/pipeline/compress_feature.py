@@ -15,6 +15,8 @@ class Compressor(metaclass=ABCMeta):
         return self.transform(X)
 
     def save(self, path):
+        if path is None:
+            return
         assert not os.path.exists(path)
         self._save(path)
 

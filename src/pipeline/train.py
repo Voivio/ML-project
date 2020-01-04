@@ -3,8 +3,8 @@ import pickle
 import numpy as np
 from sklearn import metrics  # TODO: need to implement them myself
 
-from data_utils import load_labels
-from compress_feature import PCA
+# from data_utils import load_labels
+from compress_feature import PCACompressor
 from classifiers import LogisticRegressionClassifier
 
 '''
@@ -16,10 +16,10 @@ Usage:
 '''
 
 
-def load_pair_feature(fname):
-    with open(fname, 'rb') as f:
-        features = pickle.load(f)
-    return features.reshape(2, features.shape[0] / 2, features.shape[1])
+# def load_pair_feature(fname):
+#     with open(fname, 'rb') as f:
+#         features = pickle.load(f)
+#     return features.reshape(2, features.shape[0] / 2, features.shape[1])
 
 
 def aggregate_data(x, y, agg):
@@ -38,20 +38,22 @@ def evaluate(classifier, x, y):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()  # Possibly will configure: compressor, trainer
-    parser.add_argument('--train-features')  # data
-    parser.add_argument('--train-data')
-    parser.add_argument('--test-features')
-    parser.add_argument('--test-data')
+    parser.add_argument('--train')
+    parser.add_argument('--test')
     parser.add_argument('--agg-feature', default='minus-abs', choices=['minus-abs', ])  # feature aggregation
     parser.add_argument('--n-compressed-dim', type=int)  # compressor
-    parser.add_argument('--save-compressor')  # save dir
-    parser.add_argument('--save-classifier')
+    parser.add_argument('--save-compressor', default=None)  # save dir
+    parser.add_argument('--save-classifier', default=None)
     args = parser.parse_args()
 
-    train_x, train_y = aggregate_data(load_pair_feature(args.train_features), load_labels(args.train_data), args.agg)
-    test_x, test_y = aggregate_data(load_pair_feature(args.test_features), load_labels(args.test_data), args.agg)
+    with open(args.train, 'rb') as f:
+        train_x, train_y = pickle.load(f)
+        train_x, train_y = aggregate_data(train_x, train_y, args.agg_feature)
+    with open(args.test, 'rb') as f:
+        test_x, test_y = pickle.load(f)
+        test_x, test_y = aggregate_data(test_x, test_y, args.agg_feature)
 
-    compressor = PCA(args.n_compressed_dim)
+    compressor = PCACompressor(args.n_compressed_dim)
     train_x = compressor.fit_transform(train_x)
     test_x = compressor.transform(test_x)
     compressor.save(args.save_compressor)
