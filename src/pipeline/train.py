@@ -26,13 +26,18 @@ def aggregate_data(data, agg):
         raise ValueError("agg cannot be %s" % agg)
 
 
-def evaluate(classifier, default_option, x, y, z=None):
-    y_pred = classifier.predict(x)
-    if z is not None:
-        y = np.concatenate([y, z], axis=0)
-        y_pred = np.concatenate([y_pred, np.repeat(default_option, z.shape)], axis=0)
-    print("\tAcc score  = %.2f" % (metrics.accuracy_score(y, y_pred) * 100))
-    print("\tF1 score   = %.2f" % (metrics.f1_score(y, y_pred) * 100))
+def evaluate(y, z, pred, default_option):
+    print("\tw/o invalid data:")
+    print("\t\tAcc score  = %.2f" % (metrics.accuracy_score(y, pred) * 100))
+    print("\t\tF1 score   = %.2f" % (metrics.f1_score(y, pred) * 100))
+    y = np.concatenate([y, z], axis=0)
+    pred = np.concatenate([pred, np.repeat(default_option, z.shape)], axis=0)
+    print("\twith invalid data:")
+    acc = metrics.accuracy_score(y, pred) * 100
+    f1 = metrics.f1_score(y, pred) * 100
+    print("\t\tAcc score  = %.2f" % acc)
+    print("\t\tF1 score   = %.2f" % f1)
+    return acc, f1
 
 
 def load_data(data):
@@ -70,14 +75,12 @@ def train_and_evaluate(train, test, args):
         with open(args.save_default, 'w') as f:
             f.write(str(default_option))
 
-    print("Evaluate on training set w/o invalid data")
-    evaluate(classifier, default_option, train_x, train_y)
-    print("Evaluate on training set with invalid data")
-    evaluate(classifier, default_option, train_x, train_y, train_z)
-    print("Evaluate on testing set w/o invalid data")
-    evaluate(classifier, default_option, test_x, test_y)
-    print("Evaluate on testing set with invalid data")
-    evaluate(classifier, default_option, test_x, test_y, test_z)
+    train_pred = classifier.predict(train_x)
+    print("Evaluate on training set")
+    evaluate(train_y, train_z, train_pred, default_option)
+    test_pred = classifier.predict(test_x)
+    print("Evaluate on testing set")
+    return evaluate(test_y, test_z, test_pred, default_option)
 
 
 if __name__ == '__main__':
