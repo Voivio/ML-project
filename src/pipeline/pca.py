@@ -1,31 +1,12 @@
-from abc import ABCMeta, abstractmethod
 import numpy as np
 
 from svd_util import randomized_svd
 
 
-class Compressor(metaclass=ABCMeta):
-    @abstractmethod
-    def fit(self, X):
-        # X: should be (N, D) matrix
-        raise NotImplementedError
-
-    def fit_transform(self, X):
-        self.fit(X)
-        return self.transform(X)
-
-    @abstractmethod
-    def transform(self, X):
-        # X: should be (N, D) matrix
-        raise NotImplementedError
-
-
-class PCACompressor(Compressor):
-    # TODO: reimplement or delete when releasing code
-    def __init__(self, n_components: int, seed: int = 2333):
+class PCA:
+    def __init__(self, n_components: int):
         self.n_components = n_components
         assert isinstance(n_components, int)
-        self.seed = seed
 
     def fit(self, X):  # (N, D) arr
         X = X.astype(np.float)
@@ -63,15 +44,3 @@ class PCACompressor(Compressor):
             X = X - self.mean_
         X_transformed = np.dot(X, self.components_.T)
         return X_transformed
-
-
-COMPRESSOR_MAP = dict(
-    pca=PCACompressor
-)
-
-
-def get_compressor(name, n_component, load=None, **kwargs):
-    compressor = COMPRESSOR_MAP[name](n_component, **kwargs)
-    if load is not None:
-        compressor.load(load)
-    return compressor

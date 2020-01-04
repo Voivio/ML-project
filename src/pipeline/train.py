@@ -2,11 +2,10 @@ import os
 import argparse
 import pickle
 import numpy as np
-from sklearn import metrics  # TODO: need to implement them myself
 
 # from data_utils import load_labels
-from compressor import get_compressor
-from logistic_regression import get_classifier, CLASSIFIER_MAP
+from pca import PCA
+from logistic_regression import LogisticRegression
 from model import Model
 
 '''
@@ -35,8 +34,8 @@ def get_fold(folds, test_fold: int):
 
 
 def train_and_evaluate(train, test, args):
-    compressor = get_compressor('pca', args.n_component)
-    classifier = get_classifier(args.classifier)
+    compressor = PCA(args.n_components)
+    classifier = LogisticRegression(args.lr, args.iters, verbose=args.verbose)
 
     model = Model(args.agg_feature, compressor, classifier)
 
@@ -53,10 +52,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()  # Possibly will configure: compressor, trainer
     parser.add_argument('--data')
     parser.add_argument('--test-fold', default=9, type=int)
-    parser.add_argument('--classifier', required=True, choices=list(CLASSIFIER_MAP.keys()))
-    parser.add_argument('--norm', action='store_true')
+    # PCA
+    parser.add_argument('--n-components', default=256, type=int)
+    # Logistic Regression
+    parser.add_argument('--lr', default=1e-3, type=float)
+    parser.add_argument('--iters', default=1500, type=int)
+    parser.add_argument('--verbose', action='store_true')
+    # Model
     parser.add_argument('--agg-feature', default='minus-abs', choices=Model.AGG_CHOICES)
-    parser.add_argument('--n-component', type=int)  # compressor
     parser.add_argument('--dump', default=None)
     args = parser.parse_args()
 
