@@ -23,7 +23,7 @@ Usage:
 
 
 def aggregate_data(x, y, agg):
-    x1, x2 = x
+    x1, x2 = x.transpose(1, 0, 2)
     if agg == 'minus-abs':
         return np.abs(x1 - x2), y
     else:
@@ -64,4 +64,5 @@ if __name__ == '__main__':
 
     print("Evaluate on training set")
     evaluate(classifier, train_x, train_y)
+    print("Evaluate on testing set")
     evaluate(classifier, test_x, test_y)

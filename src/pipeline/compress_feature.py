@@ -46,6 +46,9 @@ class PCACompressor(Compressor):
     def fit_transform(self, X):
         return self.pca.fit_transform(X)
 
+    def transform(self, X):
+        return self.pca.transform(X)
+
     def _save(self, path):
         with open(path, 'wb') as f:
             pickle.dump(f, self.pca)
