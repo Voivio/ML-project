@@ -1,7 +1,9 @@
-import util
 import cv2
-import h5py
-# import numpy as np
+import numpy as np
+
+from util import alignShapeToBox, estimateTransform, evaluateFern
+
+
 # filepath = 'model.mat'
 # arrays = {}
 # f = h5py.File(filepath)
@@ -29,7 +31,7 @@ def applyModel(img, model):
         boxes = np.array([])
         points = np.array([])
         succeeded = False
-        return
+        return boxes, points, succeeded
 
     # Scale it properly, actually no sclae
     # take only on box
@@ -83,7 +85,7 @@ def applyModel(img, model):
 
         # find the points using the model
         for t in range(T):
-            [s, R, ~] = estimateTransform(guess.reshape(Nfp, 2), meanshape.reshape(Nfp, 2))
+            s, R, _ = estimateTransform(guess.reshape(Nfp, 2), meanshape.reshape(Nfp, 2))
             M = s*R
             lc = model.stages[t].localCoords
             P = lc.shape[0]
@@ -126,4 +128,4 @@ def applyModel(img, model):
 
     succeeded = True
 
-return box, points, succeeded
+    return box, points, succeeded
