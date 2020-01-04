@@ -59,7 +59,7 @@ def init_lbp_mapping():
 
 def lbp_hist(img, lbp_mapping_dict):
     h, w = img.shape
-    hist = np.zeros((len(lbp_mapping_dict) if lbp_mapping_dict is not None else (1 << 8),), dtype=np.int)
+    data = []
     for i in range(1, h - 1):
         for j in range(1, w - 1):
             local_pattern = [img[i - 1, j], img[i - 1, j - 1], img[i, j - 1], img[i + 1, j - 1], img[i + 1, j],
@@ -69,8 +69,8 @@ def lbp_hist(img, lbp_mapping_dict):
                 lbp_code = lbp_mapping_dict[raw_code]
             else:
                 lbp_code = int("".join([str(int(x > img[i, j])) for x in local_pattern]), 2)
-            hist[lbp_code] += 1
-    return hist
+            data.append(lbp_code)
+    return np.bincount(data, minlength=(len(lbp_mapping_dict) if lbp_mapping_dict is not None else (1 << 8)))
 
 
 class HighDimensionalLBP:
