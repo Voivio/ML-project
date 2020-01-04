@@ -29,7 +29,10 @@ def get_fold(folds, test_fold: int):
     train = folds[:test_fold] + folds[test_fold + 1:]
     train = list(zip(*train))
     train = [np.concatenate(x, axis=0) for x in train]
-    test = folds[test_fold]
+    if test_fold == len(folds):
+        test = None
+    else:
+        test = folds[test_fold]
     return train, test
 
 
@@ -43,8 +46,11 @@ def train_and_evaluate(train, test, args):
 
     print("Evaluate on training set")
     model.evaluate(train)
-    print("Evaluate on testing set")
-    return model, model.evaluate(test)
+    if test is not None:
+        print("Evaluate on testing set")
+        return model, model.evaluate(test)
+    else:
+        return model, None
 
 
 if __name__ == '__main__':
@@ -78,7 +84,7 @@ if __name__ == '__main__':
             f1s.append(f1)
         print("\nMean acc = %.2f\nMean f1 = %.2f" % (float(np.mean(accs)), float(np.mean(f1s))))
     else:
-        assert args.test_fold < 10
+        assert args.test_fold <= 10
         train, test = get_fold(folds, args.test_fold)
         model, _ = train_and_evaluate(train, test, args)
         if args.dump is not None:
