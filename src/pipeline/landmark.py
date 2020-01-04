@@ -16,6 +16,8 @@ for i, people in enumerate(people_names):
     # print('people {} : {} / {}'.format(people, i, len(people_names)))
     img_names = os.listdir(data_path + people)
     for img in img_names:
+        if img[-3:] != 'jpg' :
+            continue
         json_file = data_path + people + '/' + img[:-3] + 'json'
         # print(pts_file)
         img_gray = cv2.imread(data_path + people + '/' + img, 0)
@@ -26,25 +28,25 @@ for i, people in enumerate(people_names):
             face = faces_in_image[0]
         except IndexError as e:
             error_name_list.append(people + '\t' + str(i) + '\n')
-            print('Error name : {}, {}'.format(people, i))
+            print('%s'%(img))
             continue
 
-    	# assign the facial landmarks
-        landmarks = predictor(img_gray, face)
-
-        # unpack the 68 landmark coordinates from the dlib object into a list
-        landmarks_list = []
-        for i in range(0, landmarks.num_parts):
-        	landmarks_list.append((landmarks.part(i).x, landmarks.part(i).y))
-
-        face = [face.left(), face.top(), face.right(), face.bottom()]
-        dict = {
-            'face' : face,
-            'landmarks' : landmarks_list
-        }
-        # dump landmarks
-        with open(json_file, 'w') as f:
-            json.dump(dict, f)
+    	# # assign the facial landmarks
+        # landmarks = predictor(img_gray, face)
+        #
+        # # unpack the 68 landmark coordinates from the dlib osbject into a list
+        # landmarks_list = []
+        # for i in range(0, landmarks.num_parts):
+        # 	landmarks_list.append((landmarks.part(i).x, landmarks.part(i).y))
+        #
+        # face = [face.left(), face.top(), face.right(), face.bottom()]
+        # dict = {
+        #     'face' : face,
+        #     'landmarks' : landmarks_list
+        # }
+        # # dump landmarks
+        # with open(json_file, 'w') as f:
+        #     json.dump(dict, f)
 
     	# # for each landmark, plot and write number
     	# for landmark_num, xy in enumerate(landmarks_list, start = 1):
