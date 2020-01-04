@@ -3,6 +3,7 @@ import cv2
 import os
 from scipy.io import loadmat
 import json
+import pdb
 
 
 # class sample:
@@ -103,19 +104,22 @@ import json
 #         pass
 #
 #
-# def alignShapeToBox(shape0, box0, box):
-#     npts = shape0.shape[0]  # number of landmarks
-#     # shape = reshape(shape0, npts, 2)
-#     shape = np.zeros(shape0.shape)
-#
-#     scale = box[1, 0] / box0[1, 0]
-#     # align the center of the shape to the center of the box
-#     box_c_x, boc_c_y = np.mean(box, 0)
-#     shape = shape0 - np.tile(np.mean(shape0, 0), (npts, 1))
-#     shape = shape. * scale
-#     shape = shape + np.tile([xc, yc], (npts, 1))
-#
-#     return shape
+def alignShapeToBox(shape0, box0, box):
+    pdb.set_trace()
+    npts = shape0.shape[0]  # number of landmarks
+    # shape = reshape(shape0, npts, 2)
+    shape = np.zeros(shape0.shape)
+
+    scale = box[0] / box0[0]
+    # align the center of the shape to the center of the box
+    box_c_x, boc_c_y = np.mean(box, 0)
+    shape = shape0 - np.tile(np.mean(shape0, 0), (npts, 1))
+    shape = shape * scale
+    shape = shape + np.tile([xc, yc], (npts, 1))
+
+    return shape
+
+
 #
 #
 # def estimateTransform(source_shape, target_shape):

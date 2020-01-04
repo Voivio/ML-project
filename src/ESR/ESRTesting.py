@@ -1,8 +1,10 @@
 import os
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
-from util import Model  #, alignShapeToBox, estimateTransform, evaluateFern
+from util import Model, alignShapeToBox  # , estimateTransform, evaluateFern
 
 
 # filepath = 'model.mat'
@@ -10,6 +12,18 @@ from util import Model  #, alignShapeToBox, estimateTransform, evaluateFern
 # f = h5py.File(filepath)
 # for k, v in f.items():
 #     arrays[k] = np.array(v)
+
+def disp_img_with_box(img, box):
+    fig, ax = plt.subplots(1)
+    # Display the image
+    ax.imshow(img)
+    # Create a Rectangle patch
+    rect = patches.Rectangle(box[:2], box[2], box[3], linewidth=1, edgecolor='r',
+                             facecolor='none')
+    # Add the patch to the Axes
+    ax.add_patch(rect)
+    plt.show()
+
 
 def applyModel(img, model, debug=False):
     # Load a face detector and an image
@@ -32,12 +46,15 @@ def applyModel(img, model, debug=False):
     # Scale it properly, actually no sclae
     # take only on box
     # for bidx = 1:numel(boxes)
-    bsize = box.width
-    box = [box.x, box.y, box.x + bsize, box.y + box.height]
+    # box = [box.x, box.y, box.x + bsize, box.y + box.height]
     # boxSize = boxes{1}(3)
+    if debug:
+        disp_img_with_box(gr, box)
 
     # scale the image
     # box = (boxes{bidx}) * sfactor
+    bsize = box[2]
+    box = [box[0], box[1], box[0] + box[2], box[1] + box[3]]
     nh, nw = I.shape
 
     # cut out a smaller region
@@ -65,10 +82,10 @@ def applyModel(img, model, debug=False):
     idx = np.random.permutation(len(model.init_shapes))[:ntrials]
     Lfp = 68 * 2
     Nfp = Lfp / 2
-    results = np.zeros(ntrials, Lfp)
+    results = np.zeros((ntrials, Lfp))
     T = len(model.stages)
-    F = numel(model.stages[1].ferns[1].thresholds)
-    K = numel(model.stages[1].ferns)
+    F = len(model.stages[1]['ferns'][1]['thresholds'])
+    K = len(model.stages[1]['ferns'])
     meanshape = model.meanshape
 
     for i in range(ntrials):
@@ -129,4 +146,5 @@ def applyModel(img, model, debug=False):
 if __name__ == '__main__':
     img = cv2.imread('../../data/lfw/Aaron_Guiel/Aaron_Guiel_0001.jpg', 0)
     model = Model.load_model('../pipeline/models')
-    applyModel(img, model)
+    debug = False
+    applyModel(img, model, debug=debug)
