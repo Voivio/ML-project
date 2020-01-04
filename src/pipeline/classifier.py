@@ -72,7 +72,7 @@ class SVCClassifier(Classifier):
 
 CLASSIFIER_MAP = dict(
     logistic_regression=LogisticRegressionClassifier,
-    classifier=SVCClassifier
+    svm=SVCClassifier
 )
 
 

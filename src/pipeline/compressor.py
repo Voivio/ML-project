@@ -64,8 +64,8 @@ COMPRESSOR_MAP = dict(
 )
 
 
-def get_compressor(name, load=None, **kwargs):
-    compressor = COMPRESSOR_MAP[name](**kwargs)
+def get_compressor(name, n_component, load=None, **kwargs):
+    compressor = COMPRESSOR_MAP[name](n_component, **kwargs)
     if load is not None:
         compressor.load(load)
     return compressor

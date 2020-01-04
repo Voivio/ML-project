@@ -116,6 +116,8 @@ if __name__ == '__main__':
     parser.add_argument('--desired-left-eye-x', default=0.35, type=float)
     parser.add_argument('--desired-left-eye-y', default=0.35, type=float)
     parser.add_argument('--desired-width', default=256, type=int)
+    parser.add_argument('--img-suffix', required=True)
+    parser.add_argument('--json-suffix', required=True)
     args = parser.parse_args()
 
     jpg_list = sorted(list(glob.glob('{}/lfw/*/*_????.jpg'.format(args.data_root))))
@@ -144,6 +146,6 @@ if __name__ == '__main__':
             disp_landmarks(img, points)
             disp_landmarks(new_img, new_points)
             plt.show()
-        cv2.imwrite(jpg_fname.replace('.jpg', '.transformed.jpg'), new_img)
-        with open(json_fname.replace('.json', '.transformed.json'), 'w') as f:
+        cv2.imwrite(jpg_fname.replace('.jpg', '.' + args.img_suffix), new_img)
+        with open(json_fname.replace('.json', '.' + args.json_suffix), 'w') as f:
             json.dump([[float(x), float(y)] for x, y in new_points], f)
