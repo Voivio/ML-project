@@ -3,3 +3,4 @@ data/lfw/*/*.jpg
 data/lfw.tgz
 data/lfw/*/*.pkl
 .idea/
+opencv-4.2.0/

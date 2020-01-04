@@ -1,7 +1,8 @@
+import os
 import cv2
 import numpy as np
 
-from util import alignShapeToBox, estimateTransform, evaluateFern
+from util import Model  #, alignShapeToBox, estimateTransform, evaluateFern
 
 
 # filepath = 'model.mat'
@@ -10,28 +11,23 @@ from util import alignShapeToBox, estimateTransform, evaluateFern
 # for k, v in f.items():
 #     arrays[k] = np.array(v)
 
-def applyModel(img, model):
+def applyModel(img, model, debug=False):
     # Load a face detector and an image
     cascade_filepath = '../opencv-4.2.0/data/haarcascades'
-    detector = cv2.CascadeClassifier([cascade_filepath, '/', 'haarcascade_frontalface_alt.xml'])
+    detector = cv2.CascadeClassifier(os.path.join(cascade_filepath, 'haarcascade_frontalface_alt.xml'))
 
     # Preprocess
-    h, w, channels = img.shape
-    if channels > 1:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gr = cv2.equalizeHist(img)
+    # h, w = img.shape
     I = img
+    gr = cv2.equalizeHist(img)
 
     # Detect bounding box
-    boxes = detector.detectMultiScale(gr, scaleFactor = 1.3, minNeighbors = 2, minSize = (30, 30))
+    boxes = detector.detectMultiScale(gr, scaleFactor=1.3, minNeighbors=2, minSize=(30, 30))
 
     try:
         box = boxes[0]
-    except IndexError as e:
-        boxes = np.array([])
-        points = np.array([])
-        succeeded = False
-        return boxes, points, succeeded
+    except IndexError:
+        return np.array([]), np.array([]), False
 
     # Scale it properly, actually no sclae
     # take only on box
@@ -65,15 +61,14 @@ def applyModel(img, model):
     newbox[2] = newbox[2] + nbx_br
     newbox[3] = newbox[3] + nby_br
 
-
     ntrials = 5
     idx = np.random.permutation(len(model.init_shapes))[:ntrials]
-    Lfp = 68*2
-    Nfp = Lfp/2
+    Lfp = 68 * 2
+    Nfp = Lfp / 2
     results = np.zeros(ntrials, Lfp)
-    T = numel(model.stages)
-    F = numel(model.stages{1}.ferns{1}.thresholds)
-    K = numel(model.stages{1}.ferns)
+    T = len(model.stages)
+    F = numel(model.stages[1].ferns[1].thresholds)
+    K = numel(model.stages[1].ferns)
     meanshape = model.meanshape
 
     for i in range(ntrials):
@@ -86,46 +81,52 @@ def applyModel(img, model):
         # find the points using the model
         for t in range(T):
             s, R, _ = estimateTransform(guess.reshape(Nfp, 2), meanshape.reshape(Nfp, 2))
-            M = s*R
+            M = s * R
             lc = model.stages[t].localCoords
             P = lc.shape[0]
-            dp = np.linalg.pinv(M).dot(lc(:,1:2).T)
+            dp = np.linalg.pinv(M).dot(lc[:, 1:2].T)
             dp = dp.T
             # fpPos = guess.reshape(Nfp, 2)
-            pixPos = fpPos(lc[:,0], :) + dp
+            pixPos = fpPos[lc[:, 0], :] + dp
             # pixPos = fpPos[ind2sub([Nfp 2],lc(:,1)), :] + dp
             rows, cols = newimg.shape
             pixPos = np.round(pixPos)
-            pixPos(:,0) = np.minimum(np.maximum(pixPos[:,0], 0), cols-1)
-            pixPos(:,1) = np.minimum(np.maximum(pixPos[:,1], 0), rows-1)
-            pix = newimg[pixPos(:,2).T, pixPos(:,1).T]
+            pixPos[:, 0] = np.minimum(np.maximum(pixPos[:, 0], 0), cols - 1)
+            pixPos[:, 1] = np.minimum(np.maximum(pixPos[:, 1], 0), rows - 1)
+            pix = newimg[pixPos[:, 2].T, pixPos[:, 1].T]
             # pix = newimg(sub2ind(size(newimg), pixPos(:,2)', pixPos(:,1)'))
 
             ds = 0
             for k in range(K):
                 rho = np.zeros(F, 1)
                 for f in range(F):
-                    m = model.stages[t].features{k}{f}.m
-                    n = model.stages[t].features{k}{f}.n
+                    m = model.stages[t].features[k, f].m
+                    n = model.stages[t].features[k, f].n
                     rho[f] = pix[m] - pix[n]
-                ds = ds + evaluateFern(rho, model.stages{t}.ferns{k})
+                ds = ds + evaluateFern(rho, model.stages[t].ferns[k])
 
             ds = ds.reshape(Nfp, 2).T
             ds = np.linalg.pinv(M).dot(ds)
             ds = ds.T.reshape(1, Lfp)
             guess = guess + ds
-        results[i,:] = guess
+        results[i, :] = guess
 
     # # pick 5 best results
     # nearestNeighbors = knnsearch(results, mean(results), 'K', 25)
-    points = np.median(results, 0))
+    points = np.median(results, 0)
 
     # restore the correct positions
     points = points.reshape(Nfp, 2)
     temp = np.array([nbx_tl, nby_tl])
-    temp = temp[:,np.newaxis]
+    temp = temp[:, np.newaxis]
     points = points + tile(temp, (Nfp, 1))
 
     succeeded = True
 
     return box, points, succeeded
+
+
+if __name__ == '__main__':
+    img = cv2.imread('../../data/lfw/Aaron_Guiel/Aaron_Guiel_0001.jpg', 0)
+    model = Model.load_model('../pipeline/models')
+    applyModel(img, model)
