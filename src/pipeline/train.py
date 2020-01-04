@@ -22,6 +22,8 @@ def aggregate_data(data, agg):
     x1, x2 = x.transpose(1, 0, 2)
     if agg == 'minus-abs':
         return np.abs(x1 - x2), y, z
+    elif agg == 'mul_minus-abs':
+        return np.concatenate([x1 - x2, x1 * x2], axis=-1), y, z
     else:
         raise ValueError("agg cannot be %s" % agg)
 
@@ -88,7 +90,7 @@ if __name__ == '__main__':
     parser.add_argument('--data')
     parser.add_argument('--test-fold', default=9, type=int)
     parser.add_argument('--classifier', required=True, choices=list(CLASSIFIER_MAP.keys()))
-    parser.add_argument('--agg-feature', default='minus-abs', choices=['minus-abs', ])  # feature aggregation
+    parser.add_argument('--agg-feature', default='minus-abs', choices=['minus-abs', 'mul_minus-abs'])
     parser.add_argument('--n-component', type=int)  # compressor
     parser.add_argument('--save-compressor', default=None)  # save dir
     parser.add_argument('--save-classifier', default=None)
