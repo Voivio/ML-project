@@ -44,3 +44,7 @@ class PCA:
             X = X - self.mean_
         X_transformed = np.dot(X, self.components_.T)
         return X_transformed
+
+    def fit_transform(self, X):
+        self.fit(X)
+        return self.transform(X)
