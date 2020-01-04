@@ -8,7 +8,7 @@ import time
 import matplotlib.pyplot as plt
 import glob
 from tqdm import tqdm
-
+from skimage.measure import block_reduce
 
 # from data_utils import load_data
 
@@ -102,7 +102,7 @@ class HighDimensionalLBP:
         features = []
         for s in self.scales:
             new_points = points * s / img_shape[None, :]  # (N, 2)
-            img_resized = cv2.resize(img_normalized, (s, s))
+            img_resized = cv2.resize(img_normalized, (s, s)) if s > 0 else img_normalized
             if debug:
                 show_img_with_points(img_resized, new_points, 'rescaled to ({:d}, {:d})'.format(s, s))
             # LBP
@@ -136,11 +136,13 @@ class FasterHighDimensionalLBP:
     # Ref: https://github.com/bcsiriuschen/High-Dimensional-LBP/blob/master/src/LBPFeatureExtractor.cpp
 
     def __init__(self, parser: argparse.ArgumentParser):
-        parser.add_argument('--patch-sizes', nargs='+', type=int, default=[8, 12, 17, 24, 34])
+        parser.add_argument('--scales', nargs='+', type=int, default=[1, 2, 3, 4, 5])
+        parser.add_argument('--patch-size', type=int, default=10)
         parser.add_argument('--num-cell-x', type=int, default=4)
         parser.add_argument('--num-cell-y', type=int, default=4)
         args, _ = parser.parse_known_args()
-        self.patch_sizes = args.patch_sizes
+        self.scales = args.scales
+        self.patch_size = args.patch_size
         self.num_cell_x = args.num_cell_x
         self.num_cell_y = args.num_cell_y
         # self.uniform = uniform
@@ -160,18 +162,25 @@ class FasterHighDimensionalLBP:
         # extract LBP
         # img_shape = np.array(img.shape, dtype=np.float)
         features = []
-        for s in self.patch_sizes:
+        for s in self.scales:
+            new_points = points / float(s)
+            img_resized = block_reduce(img, (s, s), func=np.max)  # TODO: or np.mean?
+            if debug:
+                show_img_with_points(img_resized, new_points, 'rescaled to ({:d}, {:d})'.format(s, s))
             # LBP
-            for x, y in points:
+            for x, y in new_points:
                 for j in np.arange(self.num_cell_x):
                     for k in np.arange(self.num_cell_y):
                         # crop each patch
-                        center_x = int(x - s * self.num_cell_x / 2 + float(self.num_cell_x % 2 == 0) * s * 0.5 + s * j)
-                        center_y = int(y - s * self.num_cell_y / 2 + float(self.num_cell_y % 2 == 0) * s * 0.5 + s * k)
+                        center_x = int(x - self.patch_size * self.num_cell_x / 2 + float(
+                            self.num_cell_x % 2 == 0) * self.patch_size * 0.5 + self.patch_size * j)
+                        center_y = int(y - self.patch_size * self.num_cell_y / 2 + float(
+                            self.num_cell_y % 2 == 0) * self.patch_size * 0.5 + self.patch_size * k)
                         if detailed_debug:
                             show_img_with_points(img, {'crop center': [center_x, center_y], 'point': [x, y]},
                                                  'crop patch for cell {:d}, {:d}'.format(j, k), show=False)
-                        patch = cv2.getRectSubPix(img, (s + 2, s + 2), (center_x, center_y))
+                        patch = cv2.getRectSubPix(img_resized, (self.patch_size + 2, self.patch_size + 2),
+                                                  (center_x, center_y))
                         if detailed_debug:
                             show_img_with_points(patch, None, 'cropped patch at cell {:d}, {:d}'.format(j, k),
                                                  show=False)
