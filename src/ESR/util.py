@@ -108,11 +108,13 @@ def alignShapeToBox(shape0, box0, box):
     pdb.set_trace()
     npts = shape0.shape[0]  # number of landmarks
     # shape = reshape(shape0, npts, 2)
-    shape = np.zeros(shape0.shape)
-
-    scale = box[0] / box0[0]
+    # shape = np.zeros(shape0.shape)
+    box = np.array(box, dtype=np.float).reshape(2, 2)
+    box0 = np.array(box0, dtype=np.float).reshape(2, 2)
+    scale = box[1, 0] / box0[1, 0]
     # align the center of the shape to the center of the box
-    box_c_x, boc_c_y = np.mean(box, 0)
+    # box_c_x, boc_c_y = np.mean(box, 0)
+    xc, yc = np.mean(box, 0)
     shape = shape0 - np.tile(np.mean(shape0, 0), (npts, 1))
     shape = shape * scale
     shape = shape + np.tile([xc, yc], (npts, 1))

@@ -16,7 +16,10 @@ from util import Model, alignShapeToBox  # , estimateTransform, evaluateFern
 def disp_img_with_box(img, box):
     fig, ax = plt.subplots(1)
     # Display the image
-    ax.imshow(img)
+    if len(img.shape) == 3:
+        ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    else:
+        ax.imshow(img, cmap='gray', vmax=255, vmin=0)
     # Create a Rectangle patch
     rect = patches.Rectangle(box[:2], box[2], box[3], linewidth=1, edgecolor='r',
                              facecolor='none')
@@ -91,6 +94,8 @@ def applyModel(img, model, debug=False):
     for i in range(ntrials):
         # get an initial guess
         guess = model.init_shapes[idx[i]]
+        if debug:
+            disp_img_with_box(gr, model.init_boxes[idx[i]])
 
         # align the guess to the bounding box
         guess = alignShapeToBox(guess, model.init_boxes[idx[i]], newbox)
@@ -146,5 +151,6 @@ def applyModel(img, model, debug=False):
 if __name__ == '__main__':
     img = cv2.imread('../../data/lfw/Aaron_Guiel/Aaron_Guiel_0001.jpg', 0)
     model = Model.load_model('../pipeline/models')
-    debug = False
+    # debug = False
+    debug = True
     applyModel(img, model, debug=debug)
