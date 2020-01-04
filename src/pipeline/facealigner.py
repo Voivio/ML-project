@@ -11,8 +11,6 @@ import os
 from tqdm import tqdm
 import glob
 
-from data_utils import LFW_merge_file_lists
-
 FACIAL_LANDMARKS_68_IDXS = OrderedDict([
     ("mouth", (48, 68)),
     ("inner_mouth", (60, 68)),
@@ -112,7 +110,6 @@ def align(image, points, desiredLeftEye=None, desiredFaceWidth=256, desiredFaceH
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-root', required=True)
-    parser.add_argument('--list', nargs='+', default=None)
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--ignore-error', action='store_true')
     parser.add_argument('--ignore-done', action='store_true')
@@ -121,10 +118,7 @@ if __name__ == '__main__':
     parser.add_argument('--desired-width', default=256, type=int)
     args = parser.parse_args()
 
-    if args.list is not None:
-        jpg_list = LFW_merge_file_lists(args.list, data_root=args.data_root, suffix='.jpg')
-    else:
-        jpg_list = sorted(list(glob.glob('{}/lfw/*/*_????.jpg'.format(args.data_root))))
+    jpg_list = sorted(list(glob.glob('{}/lfw/*/*_????.jpg'.format(args.data_root))))
 
     for jpg_fname in tqdm(jpg_list):
         img = cv2.imread(jpg_fname)

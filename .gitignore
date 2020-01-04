@@ -2,3 +2,4 @@ data/lfpw
 data/lfw/*/*.jpg
 data/lfw.tgz
 data/lfw/*/*.pkl
+.idea/
