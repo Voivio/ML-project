@@ -6,7 +6,7 @@ from sklearn import metrics  # TODO: need to implement them myself
 
 # from data_utils import load_labels
 from compressor import get_compressor
-from classifier import get_classifier, CLASSIFIER_MAP
+from logistic_regression import get_classifier, CLASSIFIER_MAP
 from model import Model
 
 '''
