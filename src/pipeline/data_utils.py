@@ -43,4 +43,4 @@ def LFW_merge_file_lists(lists, data_root=None, suffix='.jpg'):
     output = set()
     for l in lists:
         output = output.union(set(LFW_file_list(l, data_root=data_root, suffix=suffix)))
-    return list(output)
+    return sorted(list(output))
