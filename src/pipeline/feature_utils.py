@@ -93,8 +93,9 @@ if __name__ == '__main__':
             with open(jpg.replace('.jpg', '.json')) as f:
                 pts = np.array(json.load(f), dtype=np.float)
             features = feat_extractor.extract(img, pts, debug=args.debug)  # , detailed_debug=args.detailed_debug)
-            assert not os.path.exists(jpg.replace('.jpg', args.feat_suffix)), jpg.replace('.jpg', args.feat_suffix)
-            with open(jpg.replace('.jpg', args.feat_suffix), 'wb') as f:
+            assert not os.path.exists(jpg.replace('.jpg', '.' + args.feat_suffix)), \
+                jpg.replace('.jpg', '.' + args.feat_suffix)
+            with open(jpg.replace('.jpg', '.' + args.feat_suffix), 'wb') as f:
                 pickle.dump(features, f)
     else:
         # further parse args

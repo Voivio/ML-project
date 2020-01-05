@@ -79,4 +79,6 @@ class LogisticRegression:
         if self.verbose:
             print()
             plt.plot(costs)
+            plt.xlabel('step')
+            plt.ylabel('loss')
             plt.show()

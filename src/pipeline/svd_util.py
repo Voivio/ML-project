@@ -1,5 +1,5 @@
 import numpy as np
-import scipy
+import scipy.linalg
 
 
 def randomized_range_finder(A, size, n_iter, power_iteration_normalizer='auto'):
