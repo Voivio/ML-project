@@ -23,7 +23,7 @@ FACIAL_LANDMARKS_68_IDXS = OrderedDict([
 ])
 
 
-def disp_landmarks(img, points):
+def disp_landmarks(img, points, title=None):
     plt.figure()
     plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     lgs = []
@@ -31,6 +31,8 @@ def disp_landmarks(img, points):
         plt.scatter(points[s:e, 0], points[s:e, 1], s=4, marker='*')
         lgs.append(k)
     plt.legend(lgs)
+    if title:
+        plt.title(title)
     # plt.show()
 
 

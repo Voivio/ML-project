@@ -1,5 +1,24 @@
 import numpy as np
-from sklearn import metrics
+
+
+def accuracy_score(y, pred):
+    y = np.array(y, dtype=np.int).reshape(-1)
+    pred = np.array(pred, dtype=np.int).reshape(-1)
+    return float((y == pred).sum()) / float(y.shape[0])
+
+
+def f1_score(y, pred):
+    y = np.array(y, dtype=np.int).reshape(-1)
+    pred = np.array(pred, dtype=np.int).reshape(-1)
+    tp = ((y == 1) * (pred == 1)).sum()
+    fp = ((y == 0) * (pred == 1)).sum()
+    fn = ((y == 1) * (pred == 0)).sum()
+    if tp > 0:
+        precision = float(tp) / (tp + fp)
+        recall = float(tp) / (tp + fn)
+        return 2 * ((precision * recall) / (precision + recall))
+    else:
+        return 0
 
 
 class Model:
@@ -24,7 +43,7 @@ class Model:
         elif self.agg == 'concat':
             if y is not None:
                 return np.concatenate([np.concatenate([x1, x2], axis=-1),
-                                       np.concatenate([x2, x1], axis=-1)], axis=0),\
+                                       np.concatenate([x2, x1], axis=-1)], axis=0), \
                        np.concatenate([y, y], axis=0), None if z is None else np.concatenate([z, z], axis=0)
             else:
                 return np.concatenate([x1, x2], axis=-1), y, z
@@ -46,13 +65,13 @@ class Model:
         x, y, z = data
         pred = self.infer(x)
         print("\tw/o invalid data:")
-        print("\t\tAcc score  = %.2f" % (metrics.accuracy_score(y, pred) * 100))
-        print("\t\tF1 score   = %.2f" % (metrics.f1_score(y, pred) * 100))
+        print("\t\tAcc score  = %.2f" % (accuracy_score(y, pred) * 100))
+        print("\t\tF1 score   = %.2f" % (f1_score(y, pred) * 100))
         y = np.concatenate([y, z], axis=0)
         pred = np.concatenate([pred, np.repeat(self.default_option, z.shape)], axis=0)
         print("\twith invalid data:")
-        acc = metrics.accuracy_score(y, pred) * 100
-        f1 = metrics.f1_score(y, pred) * 100
+        acc = accuracy_score(y, pred) * 100
+        f1 = f1_score(y, pred) * 100
         print("\t\tAcc score  = %.2f" % acc)
         print("\t\tF1 score   = %.2f" % f1)
         return acc, f1
